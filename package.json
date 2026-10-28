@@ -1,0 +1,13 @@
+{
+  "name": "saiki-architecture-contracts",
+  "version": "0.0.0-phase-00",
+  "private": true,
+  "description": "Phase 00 architecture contracts and validation only",
+  "type": "module",
+  "scripts": {
+    "check:contracts": "tsc -p contracts/tsconfig.json",
+    "test:phase00": "node --test tests/phase00.test.mjs",
+    "test": "npm run check:contracts && npm run test:phase00"
+  },
+  "devDependencies": { "typescript": "5.9.3" }
+}
