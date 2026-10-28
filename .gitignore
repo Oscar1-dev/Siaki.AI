@@ -2,6 +2,21 @@ node_modules/
 dist/
 target/
 *.log
+*.tsbuildinfo
 .env
 .env.*
 !.env.example
+
+# `tauri icon` emits cross-platform assets; Phase 01 ships Windows only.
+apps/desktop/src-tauri/icons/android/
+apps/desktop/src-tauri/icons/ios/
+apps/desktop/src-tauri/icons/*.icns
+apps/desktop/src-tauri/icons/StoreLogo.png
+apps/desktop/src-tauri/icons/Square*Logo.png
+apps/desktop/src-tauri/icons/64x64.png
+apps/desktop/src-tauri/icons/icon.png
+apps/desktop/src-tauri/gen/
+apps/desktop/vite.config.js
+apps/desktop/vite.config.d.ts
+apps/desktop/vitest.config.js
+apps/desktop/vitest.config.d.ts

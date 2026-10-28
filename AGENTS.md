@@ -32,3 +32,8 @@ SAIKI is a persistent Windows-first digital operator and animated companion. It 
 Preserve working modules, migrations, identifiers, and contracts. Do not start a phase before its predecessor is evidenced. Do not claim completion without checks. Never add fake integrations, simulated success, generic dashboards, decorative banners, arbitrary shell execution, or placeholders presented as working. Missing assets, permissions, tools, or APIs produce an unavailable state and blocker. Architecture changes require an ADR; breaking contract changes also require migration and owner review. Stop at the requested phase boundary.
 
 Every handoff reports files changed, commands and results, manual checks, security concerns, limitations, and blockers. External mutations identify the target and verified result.
+
+## Completed milestones
+
+- Phase 00: architecture freeze, typed authority contracts, threat model, diagrams, and acceptance matrix.
+- Phase 01: npm/Rust workspace, Tauri 2 Windows shell, React/Vite renderer, typed shell IPC, bounded native logging, renderer error boundary, locked tests/builds, and Windows CI. Later capabilities remain unavailable.

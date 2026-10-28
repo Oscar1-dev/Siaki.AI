@@ -1,13 +1,33 @@
 {
-  "name": "saiki-architecture-contracts",
-  "version": "0.0.0-phase-00",
+  "name": "saiki",
+  "version": "0.1.0",
   "private": true,
-  "description": "Phase 00 architecture contracts and validation only",
+  "description": "SAIKI Windows-first autonomous digital life workspace",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "check:contracts": "tsc -p contracts/tsconfig.json",
     "test:phase00": "node --test tests/phase00.test.mjs",
-    "test": "npm run check:contracts && npm run test:phase00"
+    "check": "npm run check:contracts && npm run check --workspace @saiki/ipc-contracts && npm run check --workspace @saiki/desktop",
+    "check:rust": "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings",
+    "test": "npm run test:phase00 && npm run test --workspace @saiki/ipc-contracts && npm run test --workspace @saiki/desktop && cargo test --workspace --locked",
+    "build:web": "npm run build --workspace @saiki/desktop",
+    "build:windows": "npm run tauri:build --workspace @saiki/desktop",
+    "smoke:windows": "node scripts/smoke-windows.mjs",
+    "verify": "npm run check && npm run check:rust && npm test && npm run build:web"
   },
-  "devDependencies": { "typescript": "5.9.3" }
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
+  }
 }
