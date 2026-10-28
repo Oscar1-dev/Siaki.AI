@@ -1,4 +1,5 @@
 mod logging;
+mod overlay;
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -7,6 +8,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tauri::{Manager, RunEvent, State};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 #[derive(Debug)]
 struct ShellState {
@@ -132,18 +134,45 @@ fn now_unix_ms() -> u64 {
 }
 
 pub fn run() {
+    let shell_state = ShellState {
+        session_id: uuid::Uuid::new_v4().to_string(),
+        started_at_unix_ms: now_unix_ms(),
+        lifecycle: Mutex::new(ShellLifecycle::Starting),
+    };
+    let overlay_state = overlay::OverlayState(Mutex::new(overlay::OverlayRuntime {
+        paused: false,
+        active_monitor_index: 0,
+    }));
     let app = tauri::Builder::default()
+        .manage(shell_state)
+        .manage(overlay_state)
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
-            let state = ShellState {
-                session_id: uuid::Uuid::new_v4().to_string(),
-                started_at_unix_ms: now_unix_ms(),
-                lifecycle: Mutex::new(ShellLifecycle::Starting),
-            };
-            *state.lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
+            *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
             log::info!(target: "saiki.lifecycle", "event=shell.ready version={}", env!("CARGO_PKG_VERSION"));
-            app.manage(state);
+            let overlay_window = app
+                .get_webview_window("overlay")
+                .ok_or_else(|| std::io::Error::other("overlay window unavailable"))?;
+            overlay_window.set_ignore_cursor_events(true)?;
+            overlay::move_to_monitor(app.handle(), 0).map_err(std::io::Error::other)?;
+            app.global_shortcut().on_shortcut(
+                overlay::PAUSE_HOTKEY,
+                |handle, _, event| {
+                    if event.state != ShortcutState::Pressed {
+                        return;
+                    }
+                    let state = handle.state::<overlay::OverlayState>();
+                    if let Ok(mut runtime) = state.0.lock() {
+                        let paused = !runtime.paused;
+                        if overlay::apply_paused(handle, paused).is_ok() {
+                            runtime.paused = paused;
+                            log::info!(target: "saiki.overlay", "event=overlay.hotkey_pause_changed paused={paused}");
+                        }
+                    }
+                },
+            )?;
 
             if std::env::args().any(|arg| arg == "--smoke-test") {
                 let handle = app.handle().clone();
@@ -155,7 +184,14 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_shell_status, write_frontend_log, request_app_exit])
+        .invoke_handler(tauri::generate_handler![
+            get_shell_status,
+            write_frontend_log,
+            request_app_exit,
+            overlay::get_overlay_status,
+            overlay::move_overlay_to_monitor,
+            overlay::set_overlay_paused
+        ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");
 

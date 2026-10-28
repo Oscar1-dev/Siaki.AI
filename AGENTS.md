@@ -37,3 +37,4 @@ Every handoff reports files changed, commands and results, manual checks, securi
 
 - Phase 00: architecture freeze, typed authority contracts, threat model, diagrams, and acceptance matrix.
 - Phase 01: npm/Rust workspace, Tauri 2 Windows shell, React/Vite renderer, typed shell IPC, bounded native logging, renderer error boundary, locked tests/builds, and Windows CI. Later capabilities remain unavailable.
+- Phase 02: transparent monitor-sized click-through overlay, separate controller hit region, physical monitor/DPI inventory, monitor switching, and global owner pause/resume hotkey. Character assets and animation remain unavailable.

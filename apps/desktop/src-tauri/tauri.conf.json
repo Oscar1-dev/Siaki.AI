@@ -17,15 +17,29 @@
       {
         "label": "main",
         "title": "SAIKI",
-        "width": 960,
-        "height": 640,
-        "minWidth": 640,
-        "minHeight": 480,
-        "resizable": true,
+        "width": 560,
+        "height": 300,
+        "minWidth": 560,
+        "minHeight": 300,
+        "resizable": false,
         "fullscreen": false,
         "decorations": true,
         "transparent": false,
         "center": true
+      },
+      {
+        "label": "overlay",
+        "title": "SAIKI Overlay",
+        "width": 800,
+        "height": 600,
+        "resizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": true
       }
     ]
   },

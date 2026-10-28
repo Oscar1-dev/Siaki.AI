@@ -2,6 +2,6 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-window",
   "description": "Minimum core permissions for the Phase 01 SAIKI shell.",
-  "windows": ["main"],
+  "windows": ["main", "overlay"],
   "permissions": ["core:default"]
 }

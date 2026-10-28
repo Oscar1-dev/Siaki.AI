@@ -8,9 +8,9 @@ test("required Phase 00 artifacts are substantive", async () => {
     assert.ok((await read(path)).length > 500, `${path} missing or too small`);
 });
 
-test("seven frozen ADRs are accepted and complete", async () => {
+test("the seven Phase 00 ADRs remain accepted and complete", async () => {
   const dir = new URL("../docs/architecture/adr/", import.meta.url);
-  const files = (await readdir(dir)).filter((name) => name.endsWith(".md"));
+  const files = (await readdir(dir)).filter((name) => /^000[1-7]-.*\.md$/.test(name));
   assert.equal(files.length, 7);
   for (const file of files) {
     const body = await read(`docs/architecture/adr/${file}`);
