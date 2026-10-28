@@ -6,6 +6,7 @@ import {
   isWorkspaceState,
   isOllamaModelList,
   isCloudStatus,
+  isConversationView,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -18,6 +19,8 @@ import {
   type CloudChatRequest,
   type CloudStatus,
   type ConfigureCloudRequest,
+  type ComposedContext,
+  type ConversationView,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -51,6 +54,14 @@ export async function deleteOpenAiKey(): Promise<CloudStatus> { const value: unk
 export async function configureCloudProvider(request: ConfigureCloudRequest): Promise<CloudStatus> { const value: unknown = await invokeTyped(IPC_COMMANDS.configureCloudProvider, { request }); if (!isCloudStatus(value)) throw new Error("Native core returned an invalid cloud status contract."); return value; }
 export async function startCloudChat(request: CloudChatRequest): Promise<{ readonly requestId: string }> { return invokeTyped(IPC_COMMANDS.startCloudChat, { request }); }
 export async function cancelCloudChat(requestId: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.cancelCloudChat, { requestId }); }
+
+function expectConversation(value: unknown): ConversationView { if (!isConversationView(value)) throw new Error("Native core returned an invalid conversation contract."); return value; }
+export async function getConversation(): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.getConversation)); }
+export async function appendOwnerMessage(content: string): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.appendOwnerMessage, { content })); }
+export async function appendSaikiMessage(content: string): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.appendSaikiMessage, { content })); }
+export async function recordToolResult(content: string): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.recordToolResult, { content })); }
+export async function clearConversation(): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.clearConversation)); }
+export async function composeConversationContext(): Promise<ComposedContext> { return invokeTyped(IPC_COMMANDS.composeConversationContext); }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
