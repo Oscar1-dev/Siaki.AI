@@ -18,6 +18,10 @@ import {
   isDecision,
   isPolicyState,
   isPolicyAuditList,
+  isSysToolsStatus,
+  isFileContent,
+  isDirEntryList,
+  isWriteResult,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -51,6 +55,12 @@ import {
   type PolicyGrant,
   type PolicyState,
   type RequestApprovalRequest,
+  type AddAppRequest,
+  type DirEntryInfo,
+  type FileContent,
+  type SysToolsStatus,
+  type WriteFileRequest,
+  type WriteResult,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -125,6 +135,17 @@ export async function requestApproval(request: RequestApprovalRequest): Promise<
 export async function resolveApproval(id: string, approve: boolean): Promise<PolicyApproval> { return invokeTyped(IPC_COMMANDS.resolveApproval, { request: { id, approve } }); }
 export async function setKillSwitch(engaged: boolean): Promise<PolicyState> { return expectPolicyState(await invokeTyped(IPC_COMMANDS.setKillSwitch, { engaged })); }
 export async function listPolicyAudit(): Promise<readonly PolicyAuditEntry[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listPolicyAudit); if (!isPolicyAuditList(value)) throw new Error("Native core returned an invalid audit contract."); return value; }
+
+function expectSysTools(value: unknown): SysToolsStatus { if (!isSysToolsStatus(value)) throw new Error("Native core returned an invalid system tools contract."); return value; }
+export async function getSysToolsStatus(): Promise<SysToolsStatus> { return expectSysTools(await invokeTyped(IPC_COMMANDS.getSysToolsStatus)); }
+export async function configureWorkspace(root: string): Promise<SysToolsStatus> { return expectSysTools(await invokeTyped(IPC_COMMANDS.configureWorkspace, { root })); }
+export async function addAllowedApp(request: AddAppRequest): Promise<SysToolsStatus> { return expectSysTools(await invokeTyped(IPC_COMMANDS.addAllowedApp, { request })); }
+export async function removeAllowedApp(id: string): Promise<SysToolsStatus> { return expectSysTools(await invokeTyped(IPC_COMMANDS.removeAllowedApp, { id })); }
+export async function launchApp(id: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.launchApp, { id }); }
+export async function readWorkspaceFile(path: string): Promise<FileContent> { const value: unknown = await invokeTyped(IPC_COMMANDS.readWorkspaceFile, { request: { path } }); if (!isFileContent(value)) throw new Error("Native core returned an invalid file contract."); return value; }
+export async function listWorkspaceDir(path: string): Promise<readonly DirEntryInfo[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listWorkspaceDir, { request: { path } }); if (!isDirEntryList(value)) throw new Error("Native core returned an invalid directory contract."); return value; }
+export async function writeWorkspaceFile(request: WriteFileRequest): Promise<WriteResult> { const value: unknown = await invokeTyped(IPC_COMMANDS.writeWorkspaceFile, { request }); if (!isWriteResult(value)) throw new Error("Native core returned an invalid write-result contract."); return value; }
+export async function rollbackWrite(token: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.rollbackWrite, { token }); }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

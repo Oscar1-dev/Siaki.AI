@@ -9,10 +9,11 @@ import { MemoryView } from "./MemoryView";
 import { KnowledgeView } from "./KnowledgeView";
 import { VoiceView } from "./VoiceView";
 import { PolicyView } from "./PolicyView";
+import { SystemView } from "./SystemView";
 import "./styles.css";
 
 type ViewState = { kind: "loading" } | { kind: "ready"; shell: ShellStatus; overlay: OverlayStatus; workspace: WorkspaceState } | { kind: "error"; message: string };
-type WorkspaceTab = "activity" | "conversation" | "memory" | "knowledge" | "voice" | "policy" | "models" | "settings" | "approvals";
+type WorkspaceTab = "activity" | "conversation" | "memory" | "knowledge" | "voice" | "policy" | "system" | "models" | "settings" | "approvals";
 
 function OverlaySurface() { return <main className="overlay-surface" aria-hidden="true"><RigSurface /></main>; }
 
@@ -36,8 +37,8 @@ function Controller() {
   if (workspace.mode === "floating") return <FloatingController overlay={overlay} onMode={(mode) => updateWorkspace(() => setWorkspaceMode(mode))} onPause={() => updateOverlay(() => setOverlayPaused(!overlay.paused))} />;
   return <main className="workspace-shell">
     <header className="workspace-header"><div className="brand"><span className="signal" /><b>SAIKI</b><small>OWNER WORKSPACE</small></div><div className="workspace-status"><span>{shell.lifecycle}</span><span>{overlay.paused ? "overlay paused" : "overlay active"}</span></div><button className="quiet-button" onClick={() => updateWorkspace(() => setWorkspaceMode("floating"))}>Minimize to floating</button></header>
-    <nav className="workspace-nav" aria-label="Workspace sections">{(["activity", "conversation", "memory", "knowledge", "voice", "policy", "models", "settings", "approvals"] as const).map((item) => <button key={item} className={tab === item ? "active" : ""} aria-current={tab === item ? "page" : undefined} onClick={() => setTab(item)}>{item}{item === "approvals" && <span className="unavailable-dot" title="Unavailable" />}</button>)}</nav>
-    <section className="workspace-content">{tab === "activity" && <ActivityView shell={shell} overlay={overlay} />}{tab === "conversation" && <ConversationView />}{tab === "memory" && <MemoryView />}{tab === "knowledge" && <KnowledgeView />}{tab === "voice" && <VoiceView />}{tab === "policy" && <PolicyView />}{tab === "models" && <ModelView />}{tab === "settings" && <SettingsView overlay={overlay} workspace={workspace} onOverlay={updateOverlay} onWorkspace={updateWorkspace} />}{tab === "approvals" && <ApprovalInbox workspace={workspace} />}</section>
+    <nav className="workspace-nav" aria-label="Workspace sections">{(["activity", "conversation", "memory", "knowledge", "voice", "policy", "system", "models", "settings", "approvals"] as const).map((item) => <button key={item} className={tab === item ? "active" : ""} aria-current={tab === item ? "page" : undefined} onClick={() => setTab(item)}>{item}{item === "approvals" && <span className="unavailable-dot" title="Unavailable" />}</button>)}</nav>
+    <section className="workspace-content">{tab === "activity" && <ActivityView shell={shell} overlay={overlay} />}{tab === "conversation" && <ConversationView />}{tab === "memory" && <MemoryView />}{tab === "knowledge" && <KnowledgeView />}{tab === "voice" && <VoiceView />}{tab === "policy" && <PolicyView />}{tab === "system" && <SystemView />}{tab === "models" && <ModelView />}{tab === "settings" && <SettingsView overlay={overlay} workspace={workspace} onOverlay={updateOverlay} onWorkspace={updateWorkspace} />}{tab === "approvals" && <ApprovalInbox workspace={workspace} />}</section>
     <footer className="workspace-footer"><span>Local session {shell.sessionId.slice(0, 8)}</span><button className="danger-button" onClick={() => void requestAppExit()}>Exit SAIKI</button></footer>
   </main>;
 }

@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDecision, isDocumentSummary, isExpressionEvent, isLipSync, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isPolicyState, isShellStatus, isVoiceStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDecision, isDocumentSummary, isExpressionEvent, isLipSync, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isPolicyState, isShellStatus, isSysToolsStatus, isWriteResult, isVoiceStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge", "get_voice_status", "configure_voice", "preview_lip_sync", "start_listening", "stop_listening", "interrupt_voice", "cancel_voice", "get_policy_state", "evaluate_action", "create_grant", "revoke_grant", "request_approval", "resolve_approval", "set_kill_switch", "list_policy_audit"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge", "get_voice_status", "configure_voice", "preview_lip_sync", "start_listening", "stop_listening", "interrupt_voice", "cancel_voice", "get_policy_state", "evaluate_action", "create_grant", "revoke_grant", "request_approval", "resolve_approval", "set_kill_switch", "list_policy_audit", "get_systools_status", "configure_workspace", "add_allowed_app", "remove_allowed_app", "launch_app", "read_workspace_file", "list_workspace_dir", "write_workspace_file", "rollback_write"]);
+});
+
+test("system-tools contracts validate status and write results", () => {
+  const status = { workspaceRoot: null, workspaceConfigured: false, workspacePresent: false, allowedApps: [], metrics: { cpuCount: 8, os: "windows", arch: "x86_64", pointerWidthBits: 64 } };
+  assert.equal(isSysToolsStatus(status), true);
+  assert.equal(isSysToolsStatus({ ...status, metrics: { cpuCount: "many" } }), false);
+  assert.equal(isWriteResult({ path: "a.txt", bytes: 3, previousExisted: true, rollbackToken: "t" }), true);
+  assert.equal(isWriteResult({ path: "a.txt", bytes: 3, previousExisted: true }), false);
 });
 
 test("policy decisions and state validate; model output cannot be an allow by shape alone", () => {

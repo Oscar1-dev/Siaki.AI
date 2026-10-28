@@ -48,6 +48,15 @@ export const IPC_COMMANDS = {
   resolveApproval: "resolve_approval",
   setKillSwitch: "set_kill_switch",
   listPolicyAudit: "list_policy_audit",
+  getSysToolsStatus: "get_systools_status",
+  configureWorkspace: "configure_workspace",
+  addAllowedApp: "add_allowed_app",
+  removeAllowedApp: "remove_allowed_app",
+  launchApp: "launch_app",
+  readWorkspaceFile: "read_workspace_file",
+  listWorkspaceDir: "list_workspace_dir",
+  writeWorkspaceFile: "write_workspace_file",
+  rollbackWrite: "rollback_write",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -263,6 +272,21 @@ export interface RequestApprovalRequest {
   readonly ttlMs: number;
 }
 
+export interface AllowedApp { readonly id: string; readonly name: string; readonly path: string }
+export interface SystemMetrics { readonly cpuCount: number; readonly os: string; readonly arch: string; readonly pointerWidthBits: number }
+export interface SysToolsStatus {
+  readonly workspaceRoot: string | null;
+  readonly workspaceConfigured: boolean;
+  readonly workspacePresent: boolean;
+  readonly allowedApps: readonly AllowedApp[];
+  readonly metrics: SystemMetrics;
+}
+export interface DirEntryInfo { readonly name: string; readonly isDir: boolean }
+export interface FileContent { readonly path: string; readonly content: string; readonly bytes: number }
+export interface WriteResult { readonly path: string; readonly bytes: number; readonly previousExisted: boolean; readonly rollbackToken: string }
+export interface AddAppRequest { readonly name: string; readonly path: string }
+export interface WriteFileRequest { readonly path: string; readonly content: string }
+
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -373,6 +397,40 @@ export interface CommandMap {
   readonly resolve_approval: { readonly args: { readonly request: { readonly id: string; readonly approve: boolean } }; readonly result: PolicyApproval };
   readonly set_kill_switch: { readonly args: { readonly engaged: boolean }; readonly result: PolicyState };
   readonly list_policy_audit: { readonly args: undefined; readonly result: readonly PolicyAuditEntry[] };
+  readonly get_systools_status: { readonly args: undefined; readonly result: SysToolsStatus };
+  readonly configure_workspace: { readonly args: { readonly root: string }; readonly result: SysToolsStatus };
+  readonly add_allowed_app: { readonly args: { readonly request: AddAppRequest }; readonly result: SysToolsStatus };
+  readonly remove_allowed_app: { readonly args: { readonly id: string }; readonly result: SysToolsStatus };
+  readonly launch_app: { readonly args: { readonly id: string }; readonly result: boolean };
+  readonly read_workspace_file: { readonly args: { readonly request: { readonly path: string } }; readonly result: FileContent };
+  readonly list_workspace_dir: { readonly args: { readonly request: { readonly path: string } }; readonly result: readonly DirEntryInfo[] };
+  readonly write_workspace_file: { readonly args: { readonly request: WriteFileRequest }; readonly result: WriteResult };
+  readonly rollback_write: { readonly args: { readonly token: string }; readonly result: boolean };
+}
+
+export function isSysToolsStatus(value: unknown): value is SysToolsStatus {
+  if (!value || typeof value !== "object") return false;
+  const s = value as Record<string, unknown>;
+  if (typeof s.workspaceConfigured !== "boolean" || typeof s.workspacePresent !== "boolean" || !Array.isArray(s.allowedApps)) return false;
+  if (s.workspaceRoot !== null && typeof s.workspaceRoot !== "string") return false;
+  const m = s.metrics as Record<string, unknown> | undefined;
+  return Boolean(m) && typeof m === "object" && typeof m.cpuCount === "number" && typeof m.os === "string" && typeof m.pointerWidthBits === "number";
+}
+
+export function isFileContent(value: unknown): value is FileContent {
+  if (!value || typeof value !== "object") return false;
+  const f = value as Record<string, unknown>;
+  return typeof f.path === "string" && typeof f.content === "string" && typeof f.bytes === "number";
+}
+
+export function isDirEntryList(value: unknown): value is readonly DirEntryInfo[] {
+  return Array.isArray(value) && value.every((e) => Boolean(e) && typeof e === "object" && typeof (e as Record<string, unknown>).name === "string" && typeof (e as Record<string, unknown>).isDir === "boolean");
+}
+
+export function isWriteResult(value: unknown): value is WriteResult {
+  if (!value || typeof value !== "object") return false;
+  const w = value as Record<string, unknown>;
+  return typeof w.path === "string" && typeof w.bytes === "number" && typeof w.previousExisted === "boolean" && typeof w.rollbackToken === "string";
 }
 
 const RISK_TIERS: readonly RiskTier[] = ["internal", "low", "external", "financial", "critical"];

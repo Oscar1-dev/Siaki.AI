@@ -15,12 +15,22 @@ const memoryClaim = { id: "m1", claim: "the owner prefers metric units", source:
 const doc = { id: "d1", title: "handbook.txt", path: "C:/docs/handbook.txt", sensitivity: "private", byteLen: 120, chunkCount: 3, ingestedAtUnixMs: 1 };
 const voice = { sttModel: { configured: false, present: false, path: null }, ttsVoice: { configured: false, present: false, path: null }, microphone: { available: false, reason: "Microphone capture is not implemented in this build." }, playback: { available: false, reason: "Audio playback is not implemented in this build." }, listeningAvailable: false, speechAudioAvailable: false, lipSyncAvailable: true, session: "idle" };
 const policyState = { killSwitchEngaged: false, grants: [], pendingApprovals: [] };
+const sysTools = { workspaceRoot: null, workspaceConfigured: false, workspacePresent: false, allowedApps: [], metrics: { cpuCount: 8, os: "windows", arch: "x86_64", pointerWidthBits: 64 } };
 
 afterEach(cleanup);
 
 beforeEach(() => {
   invoke.mockReset();
-  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : command === "get_voice_status" ? Promise.resolve(voice) : command === "get_policy_state" ? Promise.resolve(policyState) : command === "list_policy_audit" ? Promise.resolve([]) : Promise.resolve(undefined));
+  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : command === "get_voice_status" ? Promise.resolve(voice) : command === "get_policy_state" ? Promise.resolve(policyState) : command === "list_policy_audit" ? Promise.resolve([]) : command === "get_systools_status" ? Promise.resolve(sysTools) : Promise.resolve(undefined));
+});
+
+test("system view confines file tools and launches only allowlisted apps", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /system/i }));
+  expect(await screen.findByRole("heading", { name: "System & files" })).toBeInTheDocument();
+  expect(screen.getByText(/confined to the configured workspace root/i)).toBeInTheDocument();
+  expect(screen.getByText(/No applications allowed/i)).toBeInTheDocument();
 });
 
 test("policy view is deny-by-default with an owner kill switch", async () => {
