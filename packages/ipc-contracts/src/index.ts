@@ -71,7 +71,12 @@ export const IPC_COMMANDS = {
   checkpointBrowserTask: "checkpoint_browser_task",
   listBrowserTasks: "list_browser_tasks",
   evaluateBrowserStep: "evaluate_browser_step",
+  getSchedulerSnapshot: "get_scheduler_snapshot",
+  createScheduledTask: "create_scheduled_task",
+  cancelScheduledTask: "cancel_scheduled_task",
+  acknowledgeNotification: "acknowledge_notification",
 } as const;
+export const REMINDER_EVENT = "saiki://reminder" as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
 export const OPENAI_STREAM_EVENT = "saiki://openai-stream" as const;
@@ -333,6 +338,10 @@ export interface CheckpointBrowserTaskRequest { readonly taskId: string; readonl
 export type BrowserAction = "navigate" | "click" | "fill" | "extract";
 export interface BrowserStepRequest { readonly taskId: string; readonly source: "owner" | "planner" | "page_content"; readonly action: BrowserAction; readonly target: string; readonly value?: string; readonly sensitive: boolean }
 export interface BrowserStepResult { readonly outcome: "denied" | "approval_required" | "unavailable"; readonly reason: string; readonly executed: false }
+export interface ScheduledTask { readonly id:string; readonly title:string; readonly message:string; readonly scheduleKind:"once"|"interval"; readonly nextRunAtUnixMs:number; readonly intervalMs:number|null; readonly state:"active"|"completed"|"cancelled"; readonly occurrenceCount:number; readonly createdAtUnixMs:number }
+export interface ReminderNotification { readonly id:string; readonly taskId:string; readonly occurrenceAtUnixMs:number; readonly title:string; readonly message:string; readonly deliveryState:"pending"|"acknowledged"; readonly deliveryAttempts:number; readonly createdAtUnixMs:number }
+export interface SchedulerSnapshot { readonly tasks:readonly ScheduledTask[]; readonly notifications:readonly ReminderNotification[]; readonly wakeTrigger:"native_core_1s_tick"; readonly retryPolicy:"durable_exponential_backoff_max_8" }
+export interface CreateScheduleRequest { readonly title:string; readonly message:string; readonly runAtUnixMs:number; readonly intervalMs?:number|null }
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -467,6 +476,19 @@ export interface CommandMap {
   readonly checkpoint_browser_task: { readonly args: { readonly request: CheckpointBrowserTaskRequest }; readonly result: BrowserCheckpoint };
   readonly list_browser_tasks: { readonly args: undefined; readonly result: readonly BrowserTask[] };
   readonly evaluate_browser_step: { readonly args: { readonly request: BrowserStepRequest }; readonly result: BrowserStepResult };
+  readonly get_scheduler_snapshot: { readonly args: undefined; readonly result: SchedulerSnapshot };
+  readonly create_scheduled_task: { readonly args: { readonly request: CreateScheduleRequest }; readonly result: ScheduledTask };
+  readonly cancel_scheduled_task: { readonly args: { readonly id:string }; readonly result:boolean };
+  readonly acknowledge_notification: { readonly args: { readonly id:string }; readonly result:boolean };
+}
+
+export function isSchedulerSnapshot(value:unknown):value is SchedulerSnapshot {
+  if(!value||typeof value!=="object")return false; const s=value as Record<string,unknown>;
+  return Array.isArray(s.tasks)&&Array.isArray(s.notifications)&&s.wakeTrigger==="native_core_1s_tick"&&s.retryPolicy==="durable_exponential_backoff_max_8";
+}
+export function isReminderNotification(value:unknown):value is ReminderNotification {
+  if(!value||typeof value!=="object")return false; const n=value as Record<string,unknown>;
+  return typeof n.id==="string"&&typeof n.taskId==="string"&&typeof n.title==="string"&&typeof n.message==="string"&&(n.deliveryState==="pending"||n.deliveryState==="acknowledged")&&typeof n.deliveryAttempts==="number";
 }
 
 export function isBrowserStatus(value: unknown): value is BrowserStatus {

@@ -9,6 +9,7 @@ mod ollama;
 mod overlay;
 mod persona;
 mod policy;
+mod scheduler;
 mod systools;
 mod voice;
 mod workspace;
@@ -19,7 +20,7 @@ use std::{
     sync::Mutex,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use tauri::{Manager, RunEvent, State};
+use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 #[derive(Debug)]
@@ -177,6 +178,16 @@ pub fn run() {
             app.manage(systools::SysToolsState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(devtools::DevToolsState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(browser::BrowserState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(scheduler::SchedulerState::load(&config_dir).map_err(std::io::Error::other)?);
+            let scheduler_handle = app.handle().clone();
+            std::thread::spawn(move || loop {
+                std::thread::sleep(Duration::from_secs(1));
+                let state = scheduler_handle.state::<scheduler::SchedulerState>();
+                match scheduler::wake(&state) {
+                    Ok(notifications) => for notification in notifications { let _ = scheduler_handle.emit("saiki://reminder", notification); },
+                    Err(error) => log::warn!(target:"saiki.scheduler", "event=scheduler.wake_failed error={error}"),
+                }
+            });
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -286,6 +297,10 @@ pub fn run() {
             browser::checkpoint_browser_task,
             browser::list_browser_tasks,
             browser::evaluate_browser_step
+            ,scheduler::get_scheduler_snapshot,
+            scheduler::create_scheduled_task,
+            scheduler::cancel_scheduled_task,
+            scheduler::acknowledge_notification
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

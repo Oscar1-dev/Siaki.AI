@@ -28,6 +28,7 @@ import {
   isBrowserStatus,
   isBrowserTask,
   isBrowserStepResult,
+  isSchedulerSnapshot,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -80,6 +81,9 @@ import {
   type BrowserStepResult,
   type CreateBrowserTaskRequest,
   type CheckpointBrowserTaskRequest,
+  type SchedulerSnapshot,
+  type ScheduledTask,
+  type CreateScheduleRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -181,6 +185,10 @@ export async function createBrowserTask(request: CreateBrowserTaskRequest): Prom
 export async function checkpointBrowserTask(request: CheckpointBrowserTaskRequest): Promise<BrowserCheckpoint> { return invokeTyped(IPC_COMMANDS.checkpointBrowserTask, { request }); }
 export async function listBrowserTasks(): Promise<readonly BrowserTask[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listBrowserTasks); if (!Array.isArray(value) || !value.every(isBrowserTask)) throw new Error("Native core returned invalid browser tasks."); return value; }
 export async function evaluateBrowserStep(request: BrowserStepRequest): Promise<BrowserStepResult> { const value: unknown = await invokeTyped(IPC_COMMANDS.evaluateBrowserStep, { request }); if (!isBrowserStepResult(value)) throw new Error("Native core returned an invalid browser decision contract."); return value; }
+export async function getSchedulerSnapshot():Promise<SchedulerSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getSchedulerSnapshot);if(!isSchedulerSnapshot(value))throw new Error("Native core returned an invalid scheduler contract.");return value;}
+export async function createScheduledTask(request:CreateScheduleRequest):Promise<ScheduledTask>{return invokeTyped(IPC_COMMANDS.createScheduledTask,{request});}
+export async function cancelScheduledTask(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.cancelScheduledTask,{id});}
+export async function acknowledgeNotification(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.acknowledgeNotification,{id});}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

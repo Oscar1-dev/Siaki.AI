@@ -50,6 +50,17 @@ test("browser view reports the real blocker and denies page-authorized sensitive
   expect(await screen.findByText(/Untrusted page content cannot authorize/i)).toBeInTheDocument();
 });
 
+test("scheduler view exposes durable wake and retry state", async () => {
+  const previous = invoke.getMockImplementation();
+  invoke.mockImplementation((command: string, args?: unknown) => command === "get_scheduler_snapshot" ? Promise.resolve({ tasks: [], notifications: [], wakeTrigger: "native_core_1s_tick", retryPolicy: "durable_exponential_backoff_max_8" }) : previous?.(command, args));
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: "scheduler" }));
+  expect(await screen.findByRole("heading", { name: "Reminders & scheduler" })).toBeInTheDocument();
+  expect(screen.getByText(/native_core_1s_tick/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Schedule" })).toBeInTheDocument();
+});
+
 test("system view confines file tools and launches only allowlisted apps", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
