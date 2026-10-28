@@ -1,6 +1,14 @@
+mod cloud;
+mod conversation;
+mod knowledge;
 mod logging;
+mod memory;
 mod ollama;
 mod overlay;
+mod persona;
+mod policy;
+mod systools;
+mod voice;
 mod workspace;
 
 use serde::{Deserialize, Serialize};
@@ -157,6 +165,14 @@ pub fn run() {
         .manage(ollama::OllamaState::new())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
+            let config_dir = app.path().app_config_dir().map_err(|error| format!("resolve config directory: {error}"))?;
+            app.manage(cloud::CloudState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(conversation::ConversationState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(memory::MemoryState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(knowledge::KnowledgeState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(voice::VoiceState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(policy::PolicyEngine::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(systools::SysToolsState::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -206,6 +222,52 @@ pub fn run() {
             ollama::discover_ollama_models,
             ollama::start_ollama_chat,
             ollama::cancel_ollama_chat
+            ,cloud::get_cloud_status,
+            cloud::import_openai_key_from_environment,
+            cloud::delete_openai_key,
+            cloud::configure_cloud_provider,
+            cloud::start_cloud_chat,
+            cloud::cancel_cloud_chat
+            ,conversation::get_conversation,
+            conversation::append_owner_message,
+            conversation::append_saiki_message,
+            conversation::record_tool_result,
+            conversation::clear_conversation,
+            conversation::compose_conversation_context
+            ,memory::teach_memory,
+            memory::correct_memory,
+            memory::forget_memory,
+            memory::search_memory,
+            memory::list_memory,
+            memory::export_memory
+            ,knowledge::ingest_document,
+            knowledge::list_documents,
+            knowledge::forget_document,
+            knowledge::retrieve_knowledge
+            ,voice::get_voice_status,
+            voice::configure_voice,
+            voice::preview_lip_sync,
+            voice::start_listening,
+            voice::stop_listening,
+            voice::interrupt_voice,
+            voice::cancel_voice
+            ,policy::get_policy_state,
+            policy::evaluate_action,
+            policy::create_grant,
+            policy::revoke_grant,
+            policy::request_approval,
+            policy::resolve_approval,
+            policy::set_kill_switch,
+            policy::list_policy_audit
+            ,systools::get_systools_status,
+            systools::configure_workspace,
+            systools::add_allowed_app,
+            systools::remove_allowed_app,
+            systools::launch_app,
+            systools::read_workspace_file,
+            systools::list_workspace_dir,
+            systools::write_workspace_file,
+            systools::rollback_write
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");
