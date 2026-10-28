@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isCloudStatus, isCloudStreamEvent, isConversationView, isExpressionEvent, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDocumentSummary, isExpressionEvent, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge"]);
+});
+
+test("knowledge contracts validate documents and citations", () => {
+  const doc = { id: "d1", title: "handbook", path: "/docs/handbook.txt", sensitivity: "private", byteLen: 100, chunkCount: 2, ingestedAtUnixMs: 1 };
+  assert.equal(isDocumentSummary(doc), true);
+  assert.equal(isDocumentSummary({ ...doc, sensitivity: "classified" }), false);
+  const citation = { documentId: "d1", title: "handbook", path: "/docs/handbook.txt", sensitivity: "public", chunkIndex: 0, score: 0.42, snippet: "…" };
+  assert.equal(isCitationList([citation]), true);
+  assert.equal(isCitationList([{ ...citation, score: "high" }]), false);
 });
 
 test("memory contracts validate claims, provenance, and export shape", () => {

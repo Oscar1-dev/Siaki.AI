@@ -10,6 +10,9 @@ import {
   isMemoryClaim,
   isMemoryClaimList,
   isMemoryExport,
+  isDocumentSummary,
+  isDocumentSummaryList,
+  isCitationList,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -28,6 +31,10 @@ import {
   type MemoryClaim,
   type MemoryExport,
   type TeachMemoryRequest,
+  type Citation,
+  type DocumentSummary,
+  type IngestDocumentRequest,
+  type RetrieveKnowledgeRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -78,6 +85,11 @@ export async function forgetMemory(id: string): Promise<boolean> { return invoke
 export async function searchMemory(query: string): Promise<readonly MemoryClaim[]> { return expectClaimList(await invokeTyped(IPC_COMMANDS.searchMemory, { query })); }
 export async function listMemory(): Promise<readonly MemoryClaim[]> { return expectClaimList(await invokeTyped(IPC_COMMANDS.listMemory)); }
 export async function exportMemory(): Promise<MemoryExport> { const value: unknown = await invokeTyped(IPC_COMMANDS.exportMemory); if (!isMemoryExport(value)) throw new Error("Native core returned an invalid memory export contract."); return value; }
+
+export async function ingestDocument(request: IngestDocumentRequest): Promise<DocumentSummary> { const value: unknown = await invokeTyped(IPC_COMMANDS.ingestDocument, { request }); if (!isDocumentSummary(value)) throw new Error("Native core returned an invalid document contract."); return value; }
+export async function listDocuments(): Promise<readonly DocumentSummary[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listDocuments); if (!isDocumentSummaryList(value)) throw new Error("Native core returned an invalid document list contract."); return value; }
+export async function forgetDocument(id: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.forgetDocument, { id }); }
+export async function retrieveKnowledge(request: RetrieveKnowledgeRequest): Promise<readonly Citation[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.retrieveKnowledge, { request }); if (!isCitationList(value)) throw new Error("Native core returned an invalid citation contract."); return value; }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

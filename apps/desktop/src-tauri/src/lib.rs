@@ -1,5 +1,6 @@
 mod cloud;
 mod conversation;
+mod knowledge;
 mod logging;
 mod memory;
 mod ollama;
@@ -165,6 +166,7 @@ pub fn run() {
             app.manage(cloud::CloudState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(conversation::ConversationState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(memory::MemoryState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(knowledge::KnowledgeState::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -232,6 +234,10 @@ pub fn run() {
             memory::search_memory,
             memory::list_memory,
             memory::export_memory
+            ,knowledge::ingest_document,
+            knowledge::list_documents,
+            knowledge::forget_document,
+            knowledge::retrieve_knowledge
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

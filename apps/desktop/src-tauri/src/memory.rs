@@ -44,7 +44,7 @@ pub enum Sensitivity {
 }
 
 impl Sensitivity {
-    fn as_str(self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Sensitivity::Public => "public",
             Sensitivity::Private => "private",
@@ -52,7 +52,7 @@ impl Sensitivity {
         }
     }
 
-    fn parse(value: &str) -> Result<Self, String> {
+    pub fn parse(value: &str) -> Result<Self, String> {
         match value {
             "public" => Ok(Sensitivity::Public),
             "private" => Ok(Sensitivity::Private),

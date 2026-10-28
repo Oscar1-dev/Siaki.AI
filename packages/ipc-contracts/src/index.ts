@@ -29,6 +29,10 @@ export const IPC_COMMANDS = {
   searchMemory: "search_memory",
   listMemory: "list_memory",
   exportMemory: "export_memory",
+  ingestDocument: "ingest_document",
+  listDocuments: "list_documents",
+  forgetDocument: "forget_document",
+  retrieveKnowledge: "retrieve_knowledge",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -128,6 +132,34 @@ export interface CorrectMemoryRequest extends TeachMemoryRequest {
   readonly id: string;
 }
 
+export interface DocumentSummary {
+  readonly id: string;
+  readonly title: string;
+  readonly path: string;
+  readonly sensitivity: Sensitivity;
+  readonly byteLen: number;
+  readonly chunkCount: number;
+  readonly ingestedAtUnixMs: number;
+}
+export interface Citation {
+  readonly documentId: string;
+  readonly title: string;
+  readonly path: string;
+  readonly sensitivity: Sensitivity;
+  readonly chunkIndex: number;
+  readonly score: number;
+  readonly snippet: string;
+}
+export interface IngestDocumentRequest {
+  readonly path: string;
+  readonly sensitivity: Sensitivity;
+  readonly title?: string;
+}
+export interface RetrieveKnowledgeRequest {
+  readonly query: string;
+  readonly includeSensitive?: boolean;
+}
+
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -219,6 +251,32 @@ export interface CommandMap {
   readonly search_memory: { readonly args: { readonly query: string }; readonly result: readonly MemoryClaim[] };
   readonly list_memory: { readonly args: undefined; readonly result: readonly MemoryClaim[] };
   readonly export_memory: { readonly args: undefined; readonly result: MemoryExport };
+  readonly ingest_document: { readonly args: { readonly request: IngestDocumentRequest }; readonly result: DocumentSummary };
+  readonly list_documents: { readonly args: undefined; readonly result: readonly DocumentSummary[] };
+  readonly forget_document: { readonly args: { readonly id: string }; readonly result: boolean };
+  readonly retrieve_knowledge: { readonly args: { readonly request: RetrieveKnowledgeRequest }; readonly result: readonly Citation[] };
+}
+
+export function isDocumentSummary(value: unknown): value is DocumentSummary {
+  if (!value || typeof value !== "object") return false;
+  const d = value as Record<string, unknown>;
+  return typeof d.id === "string" && typeof d.title === "string" && typeof d.path === "string" &&
+    SENSITIVITIES.includes(d.sensitivity as Sensitivity) && typeof d.byteLen === "number" &&
+    typeof d.chunkCount === "number" && typeof d.ingestedAtUnixMs === "number";
+}
+
+export function isDocumentSummaryList(value: unknown): value is readonly DocumentSummary[] {
+  return Array.isArray(value) && value.every(isDocumentSummary);
+}
+
+export function isCitationList(value: unknown): value is readonly Citation[] {
+  return Array.isArray(value) && value.every((item) => {
+    if (!item || typeof item !== "object") return false;
+    const c = item as Record<string, unknown>;
+    return typeof c.documentId === "string" && typeof c.title === "string" && typeof c.path === "string" &&
+      SENSITIVITIES.includes(c.sensitivity as Sensitivity) && typeof c.chunkIndex === "number" &&
+      typeof c.score === "number" && typeof c.snippet === "string";
+  });
 }
 
 const SENSITIVITIES: readonly Sensitivity[] = ["public", "private", "sensitive"];
