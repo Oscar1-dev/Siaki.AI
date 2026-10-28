@@ -5,6 +5,9 @@ export const IPC_COMMANDS = {
   getOverlayStatus: "get_overlay_status",
   moveOverlayToMonitor: "move_overlay_to_monitor",
   setOverlayPaused: "set_overlay_paused",
+  getWorkspaceState: "get_workspace_state",
+  setWorkspaceMode: "set_workspace_mode",
+  setUiPreferences: "set_ui_preferences",
 } as const;
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
@@ -45,6 +48,28 @@ export interface OverlayStatus {
   readonly pauseHotkey: "Ctrl+Shift+F12";
 }
 
+export type WorkspaceMode = "floating" | "full";
+
+export interface ApprovalSummary {
+  readonly id: string;
+  readonly action: string;
+  readonly target: string;
+  readonly payloadDigest: string;
+  readonly expiresAtUnixMs: number;
+  readonly status: "pending";
+}
+
+export interface WorkspaceState {
+  readonly mode: WorkspaceMode;
+  readonly reducedMotion: boolean;
+  readonly speechBubbles: boolean;
+  readonly approvals: {
+    readonly availability: "unavailable";
+    readonly reason: string;
+    readonly pending: readonly ApprovalSummary[];
+  };
+}
+
 export interface CommandMap {
   readonly get_shell_status: { readonly args: undefined; readonly result: ShellStatus };
   readonly write_frontend_log: { readonly args: { readonly entry: FrontendLogEntry }; readonly result: undefined };
@@ -52,6 +77,18 @@ export interface CommandMap {
   readonly get_overlay_status: { readonly args: undefined; readonly result: OverlayStatus };
   readonly move_overlay_to_monitor: { readonly args: { readonly monitorIndex: number }; readonly result: OverlayStatus };
   readonly set_overlay_paused: { readonly args: { readonly paused: boolean }; readonly result: OverlayStatus };
+  readonly get_workspace_state: { readonly args: undefined; readonly result: WorkspaceState };
+  readonly set_workspace_mode: { readonly args: { readonly mode: WorkspaceMode }; readonly result: WorkspaceState };
+  readonly set_ui_preferences: { readonly args: { readonly preferences: { readonly reducedMotion: boolean; readonly speechBubbles: boolean } }; readonly result: WorkspaceState };
+}
+
+export function isWorkspaceState(value: unknown): value is WorkspaceState {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  if (!(["floating", "full"] as const).includes(v.mode as WorkspaceMode) || typeof v.reducedMotion !== "boolean" || typeof v.speechBubbles !== "boolean") return false;
+  if (!v.approvals || typeof v.approvals !== "object") return false;
+  const approvals = v.approvals as Record<string, unknown>;
+  return approvals.availability === "unavailable" && typeof approvals.reason === "string" && Array.isArray(approvals.pending) && approvals.pending.length === 0;
 }
 
 export function isShellStatus(value: unknown): value is ShellStatus {

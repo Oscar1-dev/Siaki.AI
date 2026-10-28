@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isOverlayStatus, isShellStatus, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences"]);
 });
 
 test("overlay status requires monitor and DPI metadata", () => {
@@ -19,4 +19,9 @@ test("shell status validator rejects incomplete values", () => {
 test("frontend log limits reject oversized model-controlled text", () => {
   assert.throws(() => validateFrontendLog({ level: "info", event: "x", message: "x".repeat(501) }));
   assert.doesNotThrow(() => validateFrontendLog({ level: "info", event: "shell.ready", message: "Renderer ready" }));
+});
+
+test("workspace state requires an honest unavailable approval inbox", () => {
+  assert.equal(isWorkspaceState({ mode: "full", reducedMotion: false, speechBubbles: true, approvals: { availability: "unavailable", reason: "Policy executor is not implemented.", pending: [] } }), true);
+  assert.equal(isWorkspaceState({ mode: "full", reducedMotion: false, speechBubbles: true, approvals: { availability: "available", pending: [{ id: "fake" }] } }), false);
 });

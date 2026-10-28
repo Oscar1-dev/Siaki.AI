@@ -1,5 +1,6 @@
 mod logging;
 mod overlay;
+mod workspace;
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -143,9 +144,15 @@ pub fn run() {
         paused: false,
         active_monitor_index: 0,
     }));
+    let workspace_state = workspace::WorkspaceState(Mutex::new(workspace::WorkspaceRuntime {
+        mode: workspace::WorkspaceMode::Floating,
+        reduced_motion: false,
+        speech_bubbles: true,
+    }));
     let app = tauri::Builder::default()
         .manage(shell_state)
         .manage(overlay_state)
+        .manage(workspace_state)
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
@@ -191,6 +198,9 @@ pub fn run() {
             overlay::get_overlay_status,
             overlay::move_overlay_to_monitor,
             overlay::set_overlay_paused
+            ,workspace::get_workspace_state,
+            workspace::set_workspace_mode,
+            workspace::set_ui_preferences
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");
