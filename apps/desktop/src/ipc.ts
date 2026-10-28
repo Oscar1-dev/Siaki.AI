@@ -29,6 +29,9 @@ import {
   isBrowserTask,
   isBrowserStepResult,
   isSchedulerSnapshot,
+  isWorldEvent,
+  isWorldProject,
+  isWorldSnapshot,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -84,6 +87,11 @@ import {
   type SchedulerSnapshot,
   type ScheduledTask,
   type CreateScheduleRequest,
+  type WorldEvent,
+  type WorldProject,
+  type WorldSnapshot,
+  type CreateWorldProjectRequest,
+  type TransitionWorldProjectRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -189,6 +197,10 @@ export async function getSchedulerSnapshot():Promise<SchedulerSnapshot>{const va
 export async function createScheduledTask(request:CreateScheduleRequest):Promise<ScheduledTask>{return invokeTyped(IPC_COMMANDS.createScheduledTask,{request});}
 export async function cancelScheduledTask(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.cancelScheduledTask,{id});}
 export async function acknowledgeNotification(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.acknowledgeNotification,{id});}
+export async function getWorldSnapshot():Promise<WorldSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getWorldSnapshot);if(!isWorldSnapshot(value))throw new Error("Native core returned an invalid world snapshot.");return value;}
+export async function listWorldEvents(afterSequence=0):Promise<readonly WorldEvent[]>{const value:unknown=await invokeTyped(IPC_COMMANDS.listWorldEvents,{afterSequence});if(!Array.isArray(value)||!value.every(isWorldEvent))throw new Error("Native core returned invalid world events.");return value;}
+export async function createWorldProject(request:CreateWorldProjectRequest):Promise<WorldProject>{const value:unknown=await invokeTyped(IPC_COMMANDS.createWorldProject,{request});if(!isWorldProject(value))throw new Error("Native core returned an invalid project.");return value;}
+export async function transitionWorldProject(request:TransitionWorldProjectRequest):Promise<WorldProject>{const value:unknown=await invokeTyped(IPC_COMMANDS.transitionWorldProject,{request});if(!isWorldProject(value))throw new Error("Native core returned an invalid project transition.");return value;}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

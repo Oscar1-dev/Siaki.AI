@@ -61,6 +61,13 @@ test("scheduler view exposes durable wake and retry state", async () => {
   expect(screen.getByRole("button", { name: "Schedule" })).toBeInTheDocument();
 });
 
+test("world view reports reconstruction consistency and lifecycle version",async()=>{
+ const previous=invoke.getMockImplementation();
+ invoke.mockImplementation((command:string,args?:unknown)=>command==="get_world_snapshot"?Promise.resolve({projects:[{id:"p",title:"SAIKI",summary:"Build",lifecycle:"active",version:2,createdAtUnixMs:1,updatedAtUnixMs:2}],eventCount:2,consistent:true,inconsistencies:[]}):command==="list_world_events"?Promise.resolve([]):previous?.(command,args));
+ render(<App/>);fireEvent.click(await screen.findByRole("button",{name:"Open workspace"}));fireEvent.click(await screen.findByRole("button",{name:"world"}));
+ expect(await screen.findByText("RECONSTRUCTION CONSISTENT")).toBeInTheDocument();expect(screen.getByText("active · v2")).toBeInTheDocument();expect(screen.getByText("2 persisted events")).toBeInTheDocument();
+});
+
 test("system view confines file tools and launches only allowlisted apps", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));

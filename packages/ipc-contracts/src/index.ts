@@ -75,8 +75,13 @@ export const IPC_COMMANDS = {
   createScheduledTask: "create_scheduled_task",
   cancelScheduledTask: "cancel_scheduled_task",
   acknowledgeNotification: "acknowledge_notification",
+  getWorldSnapshot: "get_world_snapshot",
+  listWorldEvents: "list_world_events",
+  createWorldProject: "create_world_project",
+  transitionWorldProject: "transition_world_project",
 } as const;
 export const REMINDER_EVENT = "saiki://reminder" as const;
+export const WORLD_EVENT = "saiki://world-event" as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
 export const OPENAI_STREAM_EVENT = "saiki://openai-stream" as const;
@@ -342,6 +347,12 @@ export interface ScheduledTask { readonly id:string; readonly title:string; read
 export interface ReminderNotification { readonly id:string; readonly taskId:string; readonly occurrenceAtUnixMs:number; readonly title:string; readonly message:string; readonly deliveryState:"pending"|"acknowledged"; readonly deliveryAttempts:number; readonly createdAtUnixMs:number }
 export interface SchedulerSnapshot { readonly tasks:readonly ScheduledTask[]; readonly notifications:readonly ReminderNotification[]; readonly wakeTrigger:"native_core_1s_tick"; readonly retryPolicy:"durable_exponential_backoff_max_8" }
 export interface CreateScheduleRequest { readonly title:string; readonly message:string; readonly runAtUnixMs:number; readonly intervalMs?:number|null }
+export type ProjectLifecycle="planned"|"active"|"paused"|"completed"|"cancelled";
+export interface WorldProject{readonly id:string;readonly title:string;readonly summary:string;readonly lifecycle:ProjectLifecycle;readonly version:number;readonly createdAtUnixMs:number;readonly updatedAtUnixMs:number}
+export interface WorldEvent{readonly id:string;readonly entityId:string;readonly sequence:number;readonly entityVersion:number;readonly eventType:string;readonly payload:unknown;readonly actor:"owner";readonly occurredAtUnixMs:number}
+export interface WorldSnapshot{readonly projects:readonly WorldProject[];readonly eventCount:number;readonly consistent:boolean;readonly inconsistencies:readonly string[]}
+export interface CreateWorldProjectRequest{readonly title:string;readonly summary:string}
+export interface TransitionWorldProjectRequest{readonly id:string;readonly expectedVersion:number;readonly lifecycle:ProjectLifecycle;readonly summary?:string}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -480,7 +491,15 @@ export interface CommandMap {
   readonly create_scheduled_task: { readonly args: { readonly request: CreateScheduleRequest }; readonly result: ScheduledTask };
   readonly cancel_scheduled_task: { readonly args: { readonly id:string }; readonly result:boolean };
   readonly acknowledge_notification: { readonly args: { readonly id:string }; readonly result:boolean };
+  readonly get_world_snapshot:{readonly args:undefined;readonly result:WorldSnapshot};
+  readonly list_world_events:{readonly args:{readonly afterSequence:number};readonly result:readonly WorldEvent[]};
+  readonly create_world_project:{readonly args:{readonly request:CreateWorldProjectRequest};readonly result:WorldProject};
+  readonly transition_world_project:{readonly args:{readonly request:TransitionWorldProjectRequest};readonly result:WorldProject};
 }
+
+export function isWorldProject(value:unknown):value is WorldProject{if(!value||typeof value!=="object")return false;const p=value as Record<string,unknown>;return typeof p.id==="string"&&typeof p.title==="string"&&["planned","active","paused","completed","cancelled"].includes(String(p.lifecycle))&&typeof p.version==="number";}
+export function isWorldSnapshot(value:unknown):value is WorldSnapshot{if(!value||typeof value!=="object")return false;const w=value as Record<string,unknown>;return Array.isArray(w.projects)&&w.projects.every(isWorldProject)&&typeof w.eventCount==="number"&&typeof w.consistent==="boolean"&&Array.isArray(w.inconsistencies)&&w.inconsistencies.every(v=>typeof v==="string");}
+export function isWorldEvent(value:unknown):value is WorldEvent{if(!value||typeof value!=="object")return false;const e=value as Record<string,unknown>;return typeof e.id==="string"&&typeof e.entityId==="string"&&typeof e.sequence==="number"&&typeof e.entityVersion==="number"&&typeof e.eventType==="string"&&e.actor==="owner"&&typeof e.occurredAtUnixMs==="number";}
 
 export function isSchedulerSnapshot(value:unknown):value is SchedulerSnapshot {
   if(!value||typeof value!=="object")return false; const s=value as Record<string,unknown>;

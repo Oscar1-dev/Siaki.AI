@@ -13,6 +13,7 @@ mod scheduler;
 mod systools;
 mod voice;
 mod workspace;
+mod world;
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -179,6 +180,7 @@ pub fn run() {
             app.manage(devtools::DevToolsState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(browser::BrowserState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(scheduler::SchedulerState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(world::WorldState::load(&config_dir).map_err(std::io::Error::other)?);
             let scheduler_handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 std::thread::sleep(Duration::from_secs(1));
@@ -301,6 +303,10 @@ pub fn run() {
             scheduler::create_scheduled_task,
             scheduler::cancel_scheduled_task,
             scheduler::acknowledge_notification
+            ,world::get_world_snapshot,
+            world::list_world_events,
+            world::create_world_project,
+            world::transition_world_project
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");
