@@ -10,6 +10,7 @@ mod overlay;
 mod persona;
 mod policy;
 mod scheduler;
+mod supervisor;
 mod systools;
 mod voice;
 mod workspace;
@@ -181,6 +182,17 @@ pub fn run() {
             app.manage(browser::BrowserState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(scheduler::SchedulerState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(world::WorldState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(supervisor::SupervisorState::load(&config_dir).map_err(std::io::Error::other)?);
+            let supervisor_handle = app.handle().clone();
+            std::thread::spawn(move || loop {
+                let supervisor_state = supervisor_handle.state::<supervisor::SupervisorState>();
+                supervisor_state.wait();
+                let world_state = supervisor_handle.state::<world::WorldState>();
+                match supervisor::run_wake(&supervisor_state, &world_state) {
+                    Ok(tasks) => for task in tasks { let _ = supervisor_handle.emit("saiki://supervisor-task", task); },
+                    Err(error) => log::warn!(target:"saiki.supervisor", "event=supervisor.wake_failed error={error}"),
+                }
+            });
             let scheduler_handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 std::thread::sleep(Duration::from_secs(1));
@@ -307,6 +319,9 @@ pub fn run() {
             world::list_world_events,
             world::create_world_project,
             world::transition_world_project
+            ,supervisor::get_supervisor_snapshot,
+            supervisor::create_supervisor_goal,
+            supervisor::set_supervisor_paused
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

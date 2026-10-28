@@ -68,6 +68,11 @@ test("world view reports reconstruction consistency and lifecycle version",async
  expect(await screen.findByText("RECONSTRUCTION CONSISTENT")).toBeInTheDocument();expect(screen.getByText("active · v2")).toBeInTheDocument();expect(screen.getByText("2 persisted events")).toBeInTheDocument();
 });
 
+test("supervisor exposes pause and fixed internal quotas",async()=>{
+ const previous=invoke.getMockImplementation();const supervisor={paused:false,goals:[],tasks:[],tasksPerWake:3,tasksPerHour:20,capability:"internal_world_integrity_audit_only"};invoke.mockImplementation((command:string,args?:unknown)=>command==="get_supervisor_snapshot"?Promise.resolve(supervisor):previous?.(command,args));
+ render(<App/>);fireEvent.click(await screen.findByRole("button",{name:"Open workspace"}));fireEvent.click(await screen.findByRole("button",{name:"supervisor"}));expect(await screen.findByRole("heading",{name:"Autonomous supervisor"})).toBeInTheDocument();expect(screen.getByRole("button",{name:"Pause supervisor"})).toBeInTheDocument();expect(screen.getByText(/internal_world_integrity_audit_only/)).toBeInTheDocument();
+});
+
 test("system view confines file tools and launches only allowlisted apps", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));

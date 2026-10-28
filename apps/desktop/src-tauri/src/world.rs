@@ -79,7 +79,28 @@ pub struct WorldState {
     conn: Mutex<Connection>,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldIntegritySummary {
+    pub consistent: bool,
+    pub project_count: usize,
+    pub event_count: i64,
+}
+
 impl WorldState {
+    #[cfg(test)]
+    pub(crate) fn test_state() -> Self {
+        Self::from_connection(Connection::open_in_memory().expect("world memory database"))
+            .expect("world schema")
+    }
+    pub fn integrity_summary(&self) -> Result<WorldIntegritySummary, String> {
+        let world = self.reconstruct()?;
+        Ok(WorldIntegritySummary {
+            consistent: world.consistent,
+            project_count: world.projects.len(),
+            event_count: world.event_count,
+        })
+    }
     pub fn load(config_dir: &Path) -> Result<Self, String> {
         std::fs::create_dir_all(config_dir).map_err(|_| "create world data directory failed")?;
         Self::from_connection(

@@ -79,6 +79,9 @@ export const IPC_COMMANDS = {
   listWorldEvents: "list_world_events",
   createWorldProject: "create_world_project",
   transitionWorldProject: "transition_world_project",
+  getSupervisorSnapshot:"get_supervisor_snapshot",
+  createSupervisorGoal:"create_supervisor_goal",
+  setSupervisorPaused:"set_supervisor_paused",
 } as const;
 export const REMINDER_EVENT = "saiki://reminder" as const;
 export const WORLD_EVENT = "saiki://world-event" as const;
@@ -353,6 +356,10 @@ export interface WorldEvent{readonly id:string;readonly entityId:string;readonly
 export interface WorldSnapshot{readonly projects:readonly WorldProject[];readonly eventCount:number;readonly consistent:boolean;readonly inconsistencies:readonly string[]}
 export interface CreateWorldProjectRequest{readonly title:string;readonly summary:string}
 export interface TransitionWorldProjectRequest{readonly id:string;readonly expectedVersion:number;readonly lifecycle:ProjectLifecycle;readonly summary?:string}
+export interface SupervisorGoal{readonly id:string;readonly objective:string;readonly priority:number;readonly maxTasks:number;readonly completedTasks:number;readonly state:"active"|"completed";readonly nextWakeAtUnixMs:number;readonly createdAtUnixMs:number}
+export interface SupervisorTask{readonly id:string;readonly goalId:string;readonly sequence:number;readonly state:"pending"|"running"|"completed"|"failed";readonly attempts:number;readonly outcome:string|null;readonly evidence:unknown|null;readonly createdAtUnixMs:number;readonly completedAtUnixMs:number|null}
+export interface SupervisorSnapshot{readonly paused:boolean;readonly goals:readonly SupervisorGoal[];readonly tasks:readonly SupervisorTask[];readonly tasksPerWake:3;readonly tasksPerHour:20;readonly capability:"internal_world_integrity_audit_only"}
+export interface CreateSupervisorGoalRequest{readonly objective:string;readonly priority:number;readonly maxTasks:number;readonly sleepUntilUnixMs?:number}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -495,7 +502,12 @@ export interface CommandMap {
   readonly list_world_events:{readonly args:{readonly afterSequence:number};readonly result:readonly WorldEvent[]};
   readonly create_world_project:{readonly args:{readonly request:CreateWorldProjectRequest};readonly result:WorldProject};
   readonly transition_world_project:{readonly args:{readonly request:TransitionWorldProjectRequest};readonly result:WorldProject};
+  readonly get_supervisor_snapshot:{readonly args:undefined;readonly result:SupervisorSnapshot};
+  readonly create_supervisor_goal:{readonly args:{readonly request:CreateSupervisorGoalRequest};readonly result:SupervisorGoal};
+  readonly set_supervisor_paused:{readonly args:{readonly paused:boolean};readonly result:SupervisorSnapshot};
 }
+
+export function isSupervisorSnapshot(value:unknown):value is SupervisorSnapshot{if(!value||typeof value!=="object")return false;const s=value as Record<string,unknown>;return typeof s.paused==="boolean"&&Array.isArray(s.goals)&&Array.isArray(s.tasks)&&s.tasksPerWake===3&&s.tasksPerHour===20&&s.capability==="internal_world_integrity_audit_only";}
 
 export function isWorldProject(value:unknown):value is WorldProject{if(!value||typeof value!=="object")return false;const p=value as Record<string,unknown>;return typeof p.id==="string"&&typeof p.title==="string"&&["planned","active","paused","completed","cancelled"].includes(String(p.lifecycle))&&typeof p.version==="number";}
 export function isWorldSnapshot(value:unknown):value is WorldSnapshot{if(!value||typeof value!=="object")return false;const w=value as Record<string,unknown>;return Array.isArray(w.projects)&&w.projects.every(isWorldProject)&&typeof w.eventCount==="number"&&typeof w.consistent==="boolean"&&Array.isArray(w.inconsistencies)&&w.inconsistencies.every(v=>typeof v==="string");}

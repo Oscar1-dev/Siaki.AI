@@ -32,6 +32,7 @@ import {
   isWorldEvent,
   isWorldProject,
   isWorldSnapshot,
+  isSupervisorSnapshot,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -92,6 +93,9 @@ import {
   type WorldSnapshot,
   type CreateWorldProjectRequest,
   type TransitionWorldProjectRequest,
+  type SupervisorGoal,
+  type SupervisorSnapshot,
+  type CreateSupervisorGoalRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -201,6 +205,9 @@ export async function getWorldSnapshot():Promise<WorldSnapshot>{const value:unkn
 export async function listWorldEvents(afterSequence=0):Promise<readonly WorldEvent[]>{const value:unknown=await invokeTyped(IPC_COMMANDS.listWorldEvents,{afterSequence});if(!Array.isArray(value)||!value.every(isWorldEvent))throw new Error("Native core returned invalid world events.");return value;}
 export async function createWorldProject(request:CreateWorldProjectRequest):Promise<WorldProject>{const value:unknown=await invokeTyped(IPC_COMMANDS.createWorldProject,{request});if(!isWorldProject(value))throw new Error("Native core returned an invalid project.");return value;}
 export async function transitionWorldProject(request:TransitionWorldProjectRequest):Promise<WorldProject>{const value:unknown=await invokeTyped(IPC_COMMANDS.transitionWorldProject,{request});if(!isWorldProject(value))throw new Error("Native core returned an invalid project transition.");return value;}
+export async function getSupervisorSnapshot():Promise<SupervisorSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getSupervisorSnapshot);if(!isSupervisorSnapshot(value))throw new Error("Native core returned an invalid supervisor snapshot.");return value;}
+export async function createSupervisorGoal(request:CreateSupervisorGoalRequest):Promise<SupervisorGoal>{return invokeTyped(IPC_COMMANDS.createSupervisorGoal,{request});}
+export async function setSupervisorPaused(paused:boolean):Promise<SupervisorSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.setSupervisorPaused,{paused});if(!isSupervisorSnapshot(value))throw new Error("Native core returned an invalid supervisor snapshot.");return value;}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
