@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { OverlayStatus, ShellStatus } from "@saiki/ipc-contracts";
 import { getOverlayStatus, getShellStatus, moveOverlayToMonitor, requestAppExit, setOverlayPaused, writeFrontendLog } from "./ipc";
+import { RigSurface } from "./character/RigSurface";
 import "./styles.css";
 
 type ViewState = { kind: "loading" } | { kind: "ready"; shell: ShellStatus; overlay: OverlayStatus } | { kind: "error"; message: string };
 
 function OverlaySurface() {
-  return <main className="overlay-surface" aria-hidden="true"><div className="psychic-orbit"><span>SAIKI</span><small>OVERLAY FEASIBILITY</small></div></main>;
+  return <main className="overlay-surface" aria-hidden="true"><RigSurface /><div className="rig-label"><span>SAIKI</span><small>PIXEL RIG ADAPTER</small></div></main>;
 }
 
 function Controller() {

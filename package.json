@@ -11,9 +11,9 @@
   "scripts": {
     "check:contracts": "tsc -p contracts/tsconfig.json",
     "test:phase00": "node --test tests/phase00.test.mjs",
-    "check": "npm run check:contracts && npm run check --workspace @saiki/ipc-contracts && npm run check --workspace @saiki/desktop",
+    "check": "npm run check:contracts && npm run check --workspace @saiki/ipc-contracts && npm run check --workspace @saiki/character-rig && npm run check --workspace @saiki/desktop",
     "check:rust": "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings",
-    "test": "npm run test:phase00 && npm run test --workspace @saiki/ipc-contracts && npm run test --workspace @saiki/desktop && cargo test --workspace --locked",
+    "test": "npm run test:phase00 && npm run test --workspace @saiki/ipc-contracts && npm run test --workspace @saiki/character-rig && npm run test --workspace @saiki/desktop && cargo test --workspace --locked",
     "build:web": "npm run build --workspace @saiki/desktop",
     "build:windows": "npm run tauri:build --workspace @saiki/desktop",
     "smoke:windows": "node scripts/smoke-windows.mjs",
