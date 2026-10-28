@@ -13,6 +13,8 @@ import {
   isDocumentSummary,
   isDocumentSummaryList,
   isCitationList,
+  isVoiceStatus,
+  isLipSync,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -35,6 +37,9 @@ import {
   type DocumentSummary,
   type IngestDocumentRequest,
   type RetrieveKnowledgeRequest,
+  type ConfigureVoiceRequest,
+  type LipSync,
+  type VoiceStatus,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -90,6 +95,15 @@ export async function ingestDocument(request: IngestDocumentRequest): Promise<Do
 export async function listDocuments(): Promise<readonly DocumentSummary[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listDocuments); if (!isDocumentSummaryList(value)) throw new Error("Native core returned an invalid document list contract."); return value; }
 export async function forgetDocument(id: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.forgetDocument, { id }); }
 export async function retrieveKnowledge(request: RetrieveKnowledgeRequest): Promise<readonly Citation[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.retrieveKnowledge, { request }); if (!isCitationList(value)) throw new Error("Native core returned an invalid citation contract."); return value; }
+
+function expectVoice(value: unknown): VoiceStatus { if (!isVoiceStatus(value)) throw new Error("Native core returned an invalid voice status contract."); return value; }
+export async function getVoiceStatus(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.getVoiceStatus)); }
+export async function configureVoice(request: ConfigureVoiceRequest): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.configureVoice, { request })); }
+export async function startListening(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.startListening)); }
+export async function stopListening(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.stopListening)); }
+export async function interruptVoice(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.interruptVoice)); }
+export async function cancelVoice(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.cancelVoice)); }
+export async function previewLipSync(text: string): Promise<LipSync> { const value: unknown = await invokeTyped(IPC_COMMANDS.previewLipSync, { request: { text } }); if (!isLipSync(value)) throw new Error("Native core returned an invalid lip-sync contract."); return value; }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

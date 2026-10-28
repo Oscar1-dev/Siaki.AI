@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDocumentSummary, isExpressionEvent, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDocumentSummary, isExpressionEvent, isLipSync, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isVoiceStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge", "get_voice_status", "configure_voice", "preview_lip_sync", "start_listening", "stop_listening", "interrupt_voice", "cancel_voice"]);
+});
+
+test("voice contracts report honest capabilities and a lip-sync timeline", () => {
+  const status = { sttModel: { configured: false, present: false, path: null }, ttsVoice: { configured: false, present: false, path: null }, microphone: { available: false, reason: "no capture" }, playback: { available: false, reason: "no playback" }, listeningAvailable: false, speechAudioAvailable: false, lipSyncAvailable: true, session: "idle" };
+  assert.equal(isVoiceStatus(status), true);
+  assert.equal(isVoiceStatus({ ...status, session: "chatting" }), false);
+  const lip = { visemes: [{ viseme: "pp", startMs: 0, durationMs: 60 }], estimatedDurationMs: 60, audioOutcome: "unavailable", audioReason: "no tts" };
+  assert.equal(isLipSync(lip), true);
+  assert.equal(isLipSync({ ...lip, visemes: [{ viseme: "zz", startMs: 0, durationMs: 60 }] }), false);
 });
 
 test("knowledge contracts validate documents and citations", () => {

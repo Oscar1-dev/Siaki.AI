@@ -6,6 +6,7 @@ mod memory;
 mod ollama;
 mod overlay;
 mod persona;
+mod voice;
 mod workspace;
 
 use serde::{Deserialize, Serialize};
@@ -167,6 +168,7 @@ pub fn run() {
             app.manage(conversation::ConversationState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(memory::MemoryState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(knowledge::KnowledgeState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(voice::VoiceState::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -238,6 +240,13 @@ pub fn run() {
             knowledge::list_documents,
             knowledge::forget_document,
             knowledge::retrieve_knowledge
+            ,voice::get_voice_status,
+            voice::configure_voice,
+            voice::preview_lip_sync,
+            voice::start_listening,
+            voice::stop_listening,
+            voice::interrupt_voice,
+            voice::cancel_voice
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

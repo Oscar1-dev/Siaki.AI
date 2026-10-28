@@ -33,6 +33,13 @@ export const IPC_COMMANDS = {
   listDocuments: "list_documents",
   forgetDocument: "forget_document",
   retrieveKnowledge: "retrieve_knowledge",
+  getVoiceStatus: "get_voice_status",
+  configureVoice: "configure_voice",
+  previewLipSync: "preview_lip_sync",
+  startListening: "start_listening",
+  stopListening: "stop_listening",
+  interruptVoice: "interrupt_voice",
+  cancelVoice: "cancel_voice",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -160,6 +167,29 @@ export interface RetrieveKnowledgeRequest {
   readonly includeSensitive?: boolean;
 }
 
+export type Viseme = "silence" | "pp" | "ff" | "th" | "dd" | "kk" | "ch" | "ss" | "nn" | "rr" | "aa" | "ee" | "ih" | "oh" | "ou";
+export type VoiceSessionState = "idle" | "listening" | "speaking";
+export interface VisemeFrame { readonly viseme: Viseme; readonly startMs: number; readonly durationMs: number }
+export interface LipSync {
+  readonly visemes: readonly VisemeFrame[];
+  readonly estimatedDurationMs: number;
+  readonly audioOutcome: "unavailable";
+  readonly audioReason: string;
+}
+export interface VoiceEngineAsset { readonly configured: boolean; readonly present: boolean; readonly path: string | null }
+export interface VoiceCapability { readonly available: boolean; readonly reason: string }
+export interface VoiceStatus {
+  readonly sttModel: VoiceEngineAsset;
+  readonly ttsVoice: VoiceEngineAsset;
+  readonly microphone: VoiceCapability;
+  readonly playback: VoiceCapability;
+  readonly listeningAvailable: boolean;
+  readonly speechAudioAvailable: boolean;
+  readonly lipSyncAvailable: boolean;
+  readonly session: VoiceSessionState;
+}
+export interface ConfigureVoiceRequest { readonly sttModelPath?: string | null; readonly ttsVoicePath?: string | null }
+
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -255,6 +285,36 @@ export interface CommandMap {
   readonly list_documents: { readonly args: undefined; readonly result: readonly DocumentSummary[] };
   readonly forget_document: { readonly args: { readonly id: string }; readonly result: boolean };
   readonly retrieve_knowledge: { readonly args: { readonly request: RetrieveKnowledgeRequest }; readonly result: readonly Citation[] };
+  readonly get_voice_status: { readonly args: undefined; readonly result: VoiceStatus };
+  readonly configure_voice: { readonly args: { readonly request: ConfigureVoiceRequest }; readonly result: VoiceStatus };
+  readonly preview_lip_sync: { readonly args: { readonly request: { readonly text: string } }; readonly result: LipSync };
+  readonly start_listening: { readonly args: undefined; readonly result: VoiceStatus };
+  readonly stop_listening: { readonly args: undefined; readonly result: VoiceStatus };
+  readonly interrupt_voice: { readonly args: undefined; readonly result: VoiceStatus };
+  readonly cancel_voice: { readonly args: undefined; readonly result: VoiceStatus };
+}
+
+const VISEMES: readonly Viseme[] = ["silence", "pp", "ff", "th", "dd", "kk", "ch", "ss", "nn", "rr", "aa", "ee", "ih", "oh", "ou"];
+
+export function isVoiceStatus(value: unknown): value is VoiceStatus {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  const asset = (a: unknown): boolean => Boolean(a) && typeof a === "object" && typeof (a as Record<string, unknown>).configured === "boolean" && typeof (a as Record<string, unknown>).present === "boolean";
+  const cap = (c: unknown): boolean => Boolean(c) && typeof c === "object" && typeof (c as Record<string, unknown>).available === "boolean" && typeof (c as Record<string, unknown>).reason === "string";
+  return asset(v.sttModel) && asset(v.ttsVoice) && cap(v.microphone) && cap(v.playback) &&
+    typeof v.listeningAvailable === "boolean" && typeof v.speechAudioAvailable === "boolean" &&
+    typeof v.lipSyncAvailable === "boolean" && ["idle", "listening", "speaking"].includes(String(v.session));
+}
+
+export function isLipSync(value: unknown): value is LipSync {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  if (typeof v.estimatedDurationMs !== "number" || v.audioOutcome !== "unavailable" || typeof v.audioReason !== "string") return false;
+  return Array.isArray(v.visemes) && v.visemes.every((frame) => {
+    if (!frame || typeof frame !== "object") return false;
+    const f = frame as Record<string, unknown>;
+    return VISEMES.includes(f.viseme as Viseme) && typeof f.startMs === "number" && typeof f.durationMs === "number";
+  });
 }
 
 export function isDocumentSummary(value: unknown): value is DocumentSummary {

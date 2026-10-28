@@ -13,12 +13,22 @@ const cloud = { enabled: false, model: "", credentialPresent: false, credentialS
 const conversation = { persona: { name: "Saiki", authority: "none", tone: ["dry"], preamble: "This persona controls tone only.", expressions: ["neutral", "talking"] }, messages: [{ id: "t1", role: "tool_result", content: "deploy exit code 1", createdAtUnixMs: 1 }], limits: { maxStoredMessages: 200, maxContextMessages: 24, maxContextBytes: 24576, maxContentBytes: 32768 } };
 const memoryClaim = { id: "m1", claim: "the owner prefers metric units", source: "owner", confidence: 0.8, sensitivity: "private", status: "active", supersedes: null, createdAtUnixMs: 1, updatedAtUnixMs: 1 };
 const doc = { id: "d1", title: "handbook.txt", path: "C:/docs/handbook.txt", sensitivity: "private", byteLen: 120, chunkCount: 3, ingestedAtUnixMs: 1 };
+const voice = { sttModel: { configured: false, present: false, path: null }, ttsVoice: { configured: false, present: false, path: null }, microphone: { available: false, reason: "Microphone capture is not implemented in this build." }, playback: { available: false, reason: "Audio playback is not implemented in this build." }, listeningAvailable: false, speechAudioAvailable: false, lipSyncAvailable: true, session: "idle" };
 
 afterEach(cleanup);
 
 beforeEach(() => {
   invoke.mockReset();
-  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : Promise.resolve(undefined));
+  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : command === "get_voice_status" ? Promise.resolve(voice) : Promise.resolve(undefined));
+});
+
+test("voice view shows honest unavailable capture and disabled push-to-talk", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /voice/i }));
+  expect(await screen.findByRole("heading", { name: "Voice" })).toBeInTheDocument();
+  expect(screen.getByText("MIC: UNAVAILABLE")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Push to talk" })).toBeDisabled();
 });
 
 test("knowledge view lists ingested documents with their real path", async () => {
