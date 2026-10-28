@@ -8,6 +8,7 @@ mod memory;
 mod ollama;
 mod overlay;
 mod persona;
+mod planning;
 mod policy;
 mod scheduler;
 mod supervisor;
@@ -183,6 +184,18 @@ pub fn run() {
             app.manage(scheduler::SchedulerState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(world::WorldState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(supervisor::SupervisorState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(planning::PlanningState::load(&config_dir).map_err(std::io::Error::other)?);
+            let planning_handle = app.handle().clone();
+            std::thread::spawn(move || loop {
+                let planning_state = planning_handle.state::<planning::PlanningState>();
+                planning_state.wait();
+                let world_state = planning_handle.state::<world::WorldState>();
+                match planning::run_wake(&planning_state, &world_state) {
+                    Ok(Some(task)) => { let _ = planning_handle.emit("saiki://planned-task", task); },
+                    Ok(None) => {},
+                    Err(error) => log::warn!(target:"saiki.planning", "event=planning.wake_failed error={error}"),
+                }
+            });
             let supervisor_handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 let supervisor_state = supervisor_handle.state::<supervisor::SupervisorState>();
@@ -322,6 +335,9 @@ pub fn run() {
             ,supervisor::get_supervisor_snapshot,
             supervisor::create_supervisor_goal,
             supervisor::set_supervisor_paused
+            ,planning::get_planning_snapshot,
+            planning::create_planned_goal,
+            planning::stop_planned_goal
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

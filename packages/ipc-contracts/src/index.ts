@@ -82,6 +82,9 @@ export const IPC_COMMANDS = {
   getSupervisorSnapshot:"get_supervisor_snapshot",
   createSupervisorGoal:"create_supervisor_goal",
   setSupervisorPaused:"set_supervisor_paused",
+  getPlanningSnapshot:"get_planning_snapshot",
+  createPlannedGoal:"create_planned_goal",
+  stopPlannedGoal:"stop_planned_goal",
 } as const;
 export const REMINDER_EVENT = "saiki://reminder" as const;
 export const WORLD_EVENT = "saiki://world-event" as const;
@@ -360,6 +363,12 @@ export interface SupervisorGoal{readonly id:string;readonly objective:string;rea
 export interface SupervisorTask{readonly id:string;readonly goalId:string;readonly sequence:number;readonly state:"pending"|"running"|"completed"|"failed";readonly attempts:number;readonly outcome:string|null;readonly evidence:unknown|null;readonly createdAtUnixMs:number;readonly completedAtUnixMs:number|null}
 export interface SupervisorSnapshot{readonly paused:boolean;readonly goals:readonly SupervisorGoal[];readonly tasks:readonly SupervisorTask[];readonly tasksPerWake:3;readonly tasksPerHour:20;readonly capability:"internal_world_integrity_audit_only"}
 export interface CreateSupervisorGoalRequest{readonly objective:string;readonly priority:number;readonly maxTasks:number;readonly sleepUntilUnixMs?:number}
+export interface PlannedGoal{readonly id:string;readonly objective:string;readonly successCriterion:string;readonly status:"active"|"completed"|"stopped";readonly currentPlanVersion:number;readonly createdAtUnixMs:number;readonly updatedAtUnixMs:number}
+export interface Plan{readonly id:string;readonly goalId:string;readonly version:number;readonly rationale:string;readonly status:"active"|"completed"|"superseded"|"stopped";readonly createdAtUnixMs:number}
+export interface PlannedTask{readonly id:string;readonly planId:string;readonly ordinal:number;readonly taskType:string;readonly status:"pending"|"running"|"completed";readonly selectionReason:string;readonly evidence:unknown|null;readonly createdAtUnixMs:number;readonly completedAtUnixMs:number|null}
+export interface EvidenceReview{readonly id:string;readonly goalId:string;readonly planVersion:number;readonly taskId:string;readonly verdict:"stop_success"|"pivot"|"stop_blocked";readonly reason:string;readonly evidenceDigest:string;readonly createdAtUnixMs:number}
+export interface PlanningSnapshot{readonly goals:readonly PlannedGoal[];readonly plans:readonly Plan[];readonly tasks:readonly PlannedTask[];readonly reviews:readonly EvidenceReview[];readonly capability:"internal_world_review_only"}
+export interface CreatePlannedGoalRequest{readonly objective:string;readonly successCriterion:string}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -505,7 +514,12 @@ export interface CommandMap {
   readonly get_supervisor_snapshot:{readonly args:undefined;readonly result:SupervisorSnapshot};
   readonly create_supervisor_goal:{readonly args:{readonly request:CreateSupervisorGoalRequest};readonly result:SupervisorGoal};
   readonly set_supervisor_paused:{readonly args:{readonly paused:boolean};readonly result:SupervisorSnapshot};
+  readonly get_planning_snapshot:{readonly args:undefined;readonly result:PlanningSnapshot};
+  readonly create_planned_goal:{readonly args:{readonly request:CreatePlannedGoalRequest};readonly result:PlannedGoal};
+  readonly stop_planned_goal:{readonly args:{readonly id:string};readonly result:boolean};
 }
+
+export function isPlanningSnapshot(value:unknown):value is PlanningSnapshot{if(!value||typeof value!=="object")return false;const p=value as Record<string,unknown>;return Array.isArray(p.goals)&&Array.isArray(p.plans)&&Array.isArray(p.tasks)&&Array.isArray(p.reviews)&&p.capability==="internal_world_review_only";}
 
 export function isSupervisorSnapshot(value:unknown):value is SupervisorSnapshot{if(!value||typeof value!=="object")return false;const s=value as Record<string,unknown>;return typeof s.paused==="boolean"&&Array.isArray(s.goals)&&Array.isArray(s.tasks)&&s.tasksPerWake===3&&s.tasksPerHour===20&&s.capability==="internal_world_integrity_audit_only";}
 

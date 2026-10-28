@@ -33,6 +33,7 @@ import {
   isWorldProject,
   isWorldSnapshot,
   isSupervisorSnapshot,
+  isPlanningSnapshot,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -96,6 +97,9 @@ import {
   type SupervisorGoal,
   type SupervisorSnapshot,
   type CreateSupervisorGoalRequest,
+  type PlanningSnapshot,
+  type PlannedGoal,
+  type CreatePlannedGoalRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -208,6 +212,9 @@ export async function transitionWorldProject(request:TransitionWorldProjectReque
 export async function getSupervisorSnapshot():Promise<SupervisorSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getSupervisorSnapshot);if(!isSupervisorSnapshot(value))throw new Error("Native core returned an invalid supervisor snapshot.");return value;}
 export async function createSupervisorGoal(request:CreateSupervisorGoalRequest):Promise<SupervisorGoal>{return invokeTyped(IPC_COMMANDS.createSupervisorGoal,{request});}
 export async function setSupervisorPaused(paused:boolean):Promise<SupervisorSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.setSupervisorPaused,{paused});if(!isSupervisorSnapshot(value))throw new Error("Native core returned an invalid supervisor snapshot.");return value;}
+export async function getPlanningSnapshot():Promise<PlanningSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getPlanningSnapshot);if(!isPlanningSnapshot(value))throw new Error("Native core returned an invalid planning snapshot.");return value;}
+export async function createPlannedGoal(request:CreatePlannedGoalRequest):Promise<PlannedGoal>{return invokeTyped(IPC_COMMANDS.createPlannedGoal,{request});}
+export async function stopPlannedGoal(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.stopPlannedGoal,{id});}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
