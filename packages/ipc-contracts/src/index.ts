@@ -57,6 +57,15 @@ export const IPC_COMMANDS = {
   listWorkspaceDir: "list_workspace_dir",
   writeWorkspaceFile: "write_workspace_file",
   rollbackWrite: "rollback_write",
+  getDevToolsStatus: "get_devtools_status",
+  configureDevTools: "configure_devtools",
+  addAllowedCommand: "add_allowed_command",
+  removeAllowedCommand: "remove_allowed_command",
+  gitStatus: "git_status",
+  gitDiff: "git_diff",
+  runCommand: "run_command",
+  cancelCommand: "cancel_command",
+  openInVscode: "open_in_vscode",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -287,6 +296,31 @@ export interface WriteResult { readonly path: string; readonly bytes: number; re
 export interface AddAppRequest { readonly name: string; readonly path: string }
 export interface WriteFileRequest { readonly path: string; readonly content: string }
 
+export interface DevToolsStatus {
+  readonly repoRoot: string | null;
+  readonly repoConfigured: boolean;
+  readonly isGitRepo: boolean;
+  readonly allowedCommands: readonly string[];
+  readonly vscodeConfigured: boolean;
+  readonly vscodePresent: boolean;
+  readonly codex: { readonly available: boolean; readonly reason: string };
+}
+export interface GitStatusEntry { readonly status: string; readonly path: string }
+export interface GitStatus { readonly branch: string; readonly entries: readonly GitStatusEntry[]; readonly clean: boolean }
+export interface GitDiff { readonly diff: string; readonly truncated: boolean }
+export type CommandOutcome = "succeeded" | "failed" | "denied" | "cancelled" | "unavailable";
+export interface CommandResult {
+  readonly requestId: string;
+  readonly command: string;
+  readonly outcome: CommandOutcome;
+  readonly exitCode: number | null;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly truncated: boolean;
+}
+export interface ConfigureDevToolsRequest { readonly repoRoot?: string | null; readonly vscodePath?: string | null }
+export interface RunCommandRequest { readonly requestId: string; readonly command: string; readonly args?: readonly string[]; readonly timeoutMs?: number }
+
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -406,6 +440,38 @@ export interface CommandMap {
   readonly list_workspace_dir: { readonly args: { readonly request: { readonly path: string } }; readonly result: readonly DirEntryInfo[] };
   readonly write_workspace_file: { readonly args: { readonly request: WriteFileRequest }; readonly result: WriteResult };
   readonly rollback_write: { readonly args: { readonly token: string }; readonly result: boolean };
+  readonly get_devtools_status: { readonly args: undefined; readonly result: DevToolsStatus };
+  readonly configure_devtools: { readonly args: { readonly request: ConfigureDevToolsRequest }; readonly result: DevToolsStatus };
+  readonly add_allowed_command: { readonly args: { readonly command: string }; readonly result: DevToolsStatus };
+  readonly remove_allowed_command: { readonly args: { readonly command: string }; readonly result: DevToolsStatus };
+  readonly git_status: { readonly args: undefined; readonly result: GitStatus };
+  readonly git_diff: { readonly args: { readonly request: { readonly path?: string } }; readonly result: GitDiff };
+  readonly run_command: { readonly args: { readonly request: RunCommandRequest }; readonly result: CommandResult };
+  readonly cancel_command: { readonly args: { readonly requestId: string }; readonly result: boolean };
+  readonly open_in_vscode: { readonly args: { readonly request: { readonly path: string } }; readonly result: boolean };
+}
+
+export function isDevToolsStatus(value: unknown): value is DevToolsStatus {
+  if (!value || typeof value !== "object") return false;
+  const d = value as Record<string, unknown>;
+  if (typeof d.repoConfigured !== "boolean" || typeof d.isGitRepo !== "boolean" || !Array.isArray(d.allowedCommands)) return false;
+  const codex = d.codex as Record<string, unknown> | undefined;
+  return Boolean(codex) && typeof codex === "object" && typeof codex.available === "boolean" && typeof codex.reason === "string";
+}
+
+export function isGitStatus(value: unknown): value is GitStatus {
+  if (!value || typeof value !== "object") return false;
+  const g = value as Record<string, unknown>;
+  return typeof g.branch === "string" && typeof g.clean === "boolean" && Array.isArray(g.entries) &&
+    g.entries.every((e) => Boolean(e) && typeof e === "object" && typeof (e as Record<string, unknown>).status === "string" && typeof (e as Record<string, unknown>).path === "string");
+}
+
+export function isCommandResult(value: unknown): value is CommandResult {
+  if (!value || typeof value !== "object") return false;
+  const r = value as Record<string, unknown>;
+  const outcomes = ["succeeded", "failed", "denied", "cancelled", "unavailable"];
+  return typeof r.requestId === "string" && typeof r.command === "string" && outcomes.includes(String(r.outcome)) &&
+    (r.exitCode === null || typeof r.exitCode === "number") && typeof r.stdout === "string" && typeof r.stderr === "string";
 }
 
 export function isSysToolsStatus(value: unknown): value is SysToolsStatus {

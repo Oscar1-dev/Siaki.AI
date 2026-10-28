@@ -16,12 +16,22 @@ const doc = { id: "d1", title: "handbook.txt", path: "C:/docs/handbook.txt", sen
 const voice = { sttModel: { configured: false, present: false, path: null }, ttsVoice: { configured: false, present: false, path: null }, microphone: { available: false, reason: "Microphone capture is not implemented in this build." }, playback: { available: false, reason: "Audio playback is not implemented in this build." }, listeningAvailable: false, speechAudioAvailable: false, lipSyncAvailable: true, session: "idle" };
 const policyState = { killSwitchEngaged: false, grants: [], pendingApprovals: [] };
 const sysTools = { workspaceRoot: null, workspaceConfigured: false, workspacePresent: false, allowedApps: [], metrics: { cpuCount: 8, os: "windows", arch: "x86_64", pointerWidthBits: 64 } };
+const devTools = { repoRoot: null, repoConfigured: false, isGitRepo: false, allowedCommands: [], vscodeConfigured: false, vscodePresent: false, codex: { available: false, reason: "No supported local Codex activity source is available in this build." } };
 
 afterEach(cleanup);
 
 beforeEach(() => {
   invoke.mockReset();
-  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : command === "get_voice_status" ? Promise.resolve(voice) : command === "get_policy_state" ? Promise.resolve(policyState) : command === "list_policy_audit" ? Promise.resolve([]) : command === "get_systools_status" ? Promise.resolve(sysTools) : Promise.resolve(undefined));
+  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : command === "get_voice_status" ? Promise.resolve(voice) : command === "get_policy_state" ? Promise.resolve(policyState) : command === "list_policy_audit" ? Promise.resolve([]) : command === "get_systools_status" ? Promise.resolve(sysTools) : command === "get_devtools_status" ? Promise.resolve(devTools) : Promise.resolve(undefined));
+});
+
+test("devtools view bounds the shell and reports Codex unavailable", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /devtools/i }));
+  expect(await screen.findByRole("heading", { name: "Terminal & dev tools" })).toBeInTheDocument();
+  expect(screen.getByText(/No commands allowed/i)).toBeInTheDocument();
+  expect(screen.getByText(/Codex unavailable/i)).toBeInTheDocument();
 });
 
 test("system view confines file tools and launches only allowlisted apps", async () => {

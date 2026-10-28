@@ -1,5 +1,6 @@
 mod cloud;
 mod conversation;
+mod devtools;
 mod knowledge;
 mod logging;
 mod memory;
@@ -173,6 +174,7 @@ pub fn run() {
             app.manage(voice::VoiceState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(policy::PolicyEngine::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(systools::SysToolsState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(devtools::DevToolsState::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -268,6 +270,15 @@ pub fn run() {
             systools::list_workspace_dir,
             systools::write_workspace_file,
             systools::rollback_write
+            ,devtools::get_devtools_status,
+            devtools::configure_devtools,
+            devtools::add_allowed_command,
+            devtools::remove_allowed_command,
+            devtools::git_status,
+            devtools::git_diff,
+            devtools::run_command,
+            devtools::cancel_command,
+            devtools::open_in_vscode
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

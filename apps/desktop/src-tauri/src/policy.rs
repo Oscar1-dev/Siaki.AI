@@ -212,6 +212,24 @@ impl PolicyEngine {
         })
     }
 
+    /// In-process authorization entry point for other Rust modules (e.g. the
+    /// developer-tools shell). Equivalent to the `evaluate_action` command; the
+    /// caller must act only on `Decision::Allow`.
+    pub fn authorize(
+        &self,
+        actor: &str,
+        capability: &str,
+        resource: &str,
+        arguments: &serde_json::Value,
+    ) -> Result<Decision, String> {
+        self.evaluate(&EvaluateRequest {
+            actor: actor.to_owned(),
+            capability: capability.to_owned(),
+            resource: resource.to_owned(),
+            arguments: arguments.clone(),
+        })
+    }
+
     fn evaluate(&self, request: &EvaluateRequest) -> Result<Decision, String> {
         validate_name(&request.capability, 100, "capability")?;
         validate_name(&request.resource, 200, "resource")?;

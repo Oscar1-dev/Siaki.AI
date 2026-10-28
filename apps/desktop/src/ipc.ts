@@ -22,6 +22,9 @@ import {
   isFileContent,
   isDirEntryList,
   isWriteResult,
+  isDevToolsStatus,
+  isGitStatus,
+  isCommandResult,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -61,6 +64,12 @@ import {
   type SysToolsStatus,
   type WriteFileRequest,
   type WriteResult,
+  type CommandResult,
+  type ConfigureDevToolsRequest,
+  type DevToolsStatus,
+  type GitDiff,
+  type GitStatus,
+  type RunCommandRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -146,6 +155,17 @@ export async function readWorkspaceFile(path: string): Promise<FileContent> { co
 export async function listWorkspaceDir(path: string): Promise<readonly DirEntryInfo[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listWorkspaceDir, { request: { path } }); if (!isDirEntryList(value)) throw new Error("Native core returned an invalid directory contract."); return value; }
 export async function writeWorkspaceFile(request: WriteFileRequest): Promise<WriteResult> { const value: unknown = await invokeTyped(IPC_COMMANDS.writeWorkspaceFile, { request }); if (!isWriteResult(value)) throw new Error("Native core returned an invalid write-result contract."); return value; }
 export async function rollbackWrite(token: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.rollbackWrite, { token }); }
+
+function expectDevTools(value: unknown): DevToolsStatus { if (!isDevToolsStatus(value)) throw new Error("Native core returned an invalid devtools contract."); return value; }
+export async function getDevToolsStatus(): Promise<DevToolsStatus> { return expectDevTools(await invokeTyped(IPC_COMMANDS.getDevToolsStatus)); }
+export async function configureDevTools(request: ConfigureDevToolsRequest): Promise<DevToolsStatus> { return expectDevTools(await invokeTyped(IPC_COMMANDS.configureDevTools, { request })); }
+export async function addAllowedCommand(command: string): Promise<DevToolsStatus> { return expectDevTools(await invokeTyped(IPC_COMMANDS.addAllowedCommand, { command })); }
+export async function removeAllowedCommand(command: string): Promise<DevToolsStatus> { return expectDevTools(await invokeTyped(IPC_COMMANDS.removeAllowedCommand, { command })); }
+export async function gitStatus(): Promise<GitStatus> { const value: unknown = await invokeTyped(IPC_COMMANDS.gitStatus); if (!isGitStatus(value)) throw new Error("Native core returned an invalid git status contract."); return value; }
+export async function gitDiff(path?: string): Promise<GitDiff> { return invokeTyped(IPC_COMMANDS.gitDiff, { request: path === undefined ? {} : { path } }); }
+export async function runCommand(request: RunCommandRequest): Promise<CommandResult> { const value: unknown = await invokeTyped(IPC_COMMANDS.runCommand, { request }); if (!isCommandResult(value)) throw new Error("Native core returned an invalid command-result contract."); return value; }
+export async function cancelCommand(requestId: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.cancelCommand, { requestId }); }
+export async function openInVscode(path: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.openInVscode, { request: { path } }); }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
