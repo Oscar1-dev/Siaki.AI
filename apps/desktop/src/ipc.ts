@@ -4,6 +4,7 @@ import {
   isShellStatus,
   isOverlayStatus,
   isWorkspaceState,
+  isOllamaModelList,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -11,6 +12,8 @@ import {
   type OverlayStatus,
   type WorkspaceMode,
   type WorkspaceState,
+  type OllamaChatRequest,
+  type OllamaModel,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -18,6 +21,20 @@ async function invokeTyped<K extends keyof CommandMap>(
   ...args: CommandMap[K]["args"] extends undefined ? [] : [CommandMap[K]["args"]]
 ): Promise<CommandMap[K]["result"]> {
   return invoke(command, args[0] ?? {});
+}
+
+export async function discoverOllamaModels(): Promise<readonly OllamaModel[]> {
+  const value: unknown = await invokeTyped(IPC_COMMANDS.discoverOllamaModels);
+  if (!isOllamaModelList(value)) throw new Error("Native core returned an invalid Ollama model contract.");
+  return value;
+}
+
+export async function startOllamaChat(request: OllamaChatRequest): Promise<{ readonly requestId: string }> {
+  return invokeTyped(IPC_COMMANDS.startOllamaChat, { request });
+}
+
+export async function cancelOllamaChat(requestId: string): Promise<boolean> {
+  return invokeTyped(IPC_COMMANDS.cancelOllamaChat, { requestId });
 }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {

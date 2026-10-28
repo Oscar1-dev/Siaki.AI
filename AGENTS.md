@@ -41,3 +41,4 @@ Every handoff reports files changed, commands and results, manual checks, securi
 - Phase 03: versioned layered rig manifest, runtime-neutral adapter contract, licensed-runtime evaluation, and animated procedural PixiJS rig spike. Final artwork and proprietary runtime selection remain unavailable.
 - Phase 04: interruptible renderer-neutral state machine for gaze, blink, walk, sit, and teleport; procedural Pixi pose application, fixed GPU psychic effects, and bounded frame telemetry. Final artwork remains unavailable.
 - Phase 05: native floating/full owner workspace, truthful current-session activity, process-local character/overlay settings, animation-state speech bubbles, and an explicitly unavailable approval inbox with no fake requests or actions.
+- Phase 06: loopback-only Ollama discovery and streaming, cancellation, bounded timeout behavior, and non-executable untrusted tool proposals.
