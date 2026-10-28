@@ -23,6 +23,12 @@ export const IPC_COMMANDS = {
   recordToolResult: "record_tool_result",
   clearConversation: "clear_conversation",
   composeConversationContext: "compose_conversation_context",
+  teachMemory: "teach_memory",
+  correctMemory: "correct_memory",
+  forgetMemory: "forget_memory",
+  searchMemory: "search_memory",
+  listMemory: "list_memory",
+  exportMemory: "export_memory",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -86,6 +92,40 @@ export interface ComposedContext {
 }
 export interface ExpressionEvent {
   readonly expression: Expression;
+}
+
+export type Sensitivity = "public" | "private" | "sensitive";
+export type ClaimStatus = "active" | "superseded" | "forgotten";
+export interface MemoryClaim {
+  readonly id: string;
+  readonly claim: string;
+  readonly source: string;
+  readonly confidence: number;
+  readonly sensitivity: Sensitivity;
+  readonly status: ClaimStatus;
+  readonly supersedes: string | null;
+  readonly createdAtUnixMs: number;
+  readonly updatedAtUnixMs: number;
+}
+export interface MemoryEvent {
+  readonly kind: string;
+  readonly claimId: string;
+  readonly detail: string;
+  readonly atUnixMs: number;
+}
+export interface MemoryExport {
+  readonly schemaVersion: number;
+  readonly claims: readonly MemoryClaim[];
+  readonly events: readonly MemoryEvent[];
+}
+export interface TeachMemoryRequest {
+  readonly claim: string;
+  readonly source: string;
+  readonly confidence: number;
+  readonly sensitivity: Sensitivity;
+}
+export interface CorrectMemoryRequest extends TeachMemoryRequest {
+  readonly id: string;
 }
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
@@ -173,6 +213,34 @@ export interface CommandMap {
   readonly record_tool_result: { readonly args: { readonly content: string }; readonly result: ConversationView };
   readonly clear_conversation: { readonly args: undefined; readonly result: ConversationView };
   readonly compose_conversation_context: { readonly args: undefined; readonly result: ComposedContext };
+  readonly teach_memory: { readonly args: { readonly request: TeachMemoryRequest }; readonly result: MemoryClaim };
+  readonly correct_memory: { readonly args: { readonly request: CorrectMemoryRequest }; readonly result: MemoryClaim };
+  readonly forget_memory: { readonly args: { readonly id: string }; readonly result: boolean };
+  readonly search_memory: { readonly args: { readonly query: string }; readonly result: readonly MemoryClaim[] };
+  readonly list_memory: { readonly args: undefined; readonly result: readonly MemoryClaim[] };
+  readonly export_memory: { readonly args: undefined; readonly result: MemoryExport };
+}
+
+const SENSITIVITIES: readonly Sensitivity[] = ["public", "private", "sensitive"];
+const CLAIM_STATUSES: readonly ClaimStatus[] = ["active", "superseded", "forgotten"];
+
+export function isMemoryClaim(value: unknown): value is MemoryClaim {
+  if (!value || typeof value !== "object") return false;
+  const c = value as Record<string, unknown>;
+  return typeof c.id === "string" && typeof c.claim === "string" && typeof c.source === "string" &&
+    typeof c.confidence === "number" && SENSITIVITIES.includes(c.sensitivity as Sensitivity) &&
+    CLAIM_STATUSES.includes(c.status as ClaimStatus) && (c.supersedes === null || typeof c.supersedes === "string") &&
+    typeof c.createdAtUnixMs === "number" && typeof c.updatedAtUnixMs === "number";
+}
+
+export function isMemoryClaimList(value: unknown): value is readonly MemoryClaim[] {
+  return Array.isArray(value) && value.every(isMemoryClaim);
+}
+
+export function isMemoryExport(value: unknown): value is MemoryExport {
+  if (!value || typeof value !== "object") return false;
+  const e = value as Record<string, unknown>;
+  return typeof e.schemaVersion === "number" && isMemoryClaimList(e.claims) && Array.isArray(e.events);
 }
 
 const EXPRESSIONS: readonly Expression[] = ["neutral", "talking", "focused", "annoyed", "surprised", "tired"];

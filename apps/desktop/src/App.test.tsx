@@ -11,12 +11,23 @@ const overlay = { paused: false, activeMonitorIndex: 0, pauseHotkey: "Ctrl+Shift
 const workspace = { mode: "floating", reducedMotion: false, speechBubbles: true, approvals: { availability: "unavailable", reason: "Policy-gated execution is not implemented in the completed phases.", pending: [] } };
 const cloud = { enabled: false, model: "", credentialPresent: false, credentialStore: "windows_credential_manager", endpoint: "https://api.openai.com/v1/responses", disclosure: { destination: "OpenAI API (api.openai.com)", data: ["the message", "the model"], storageRequested: false, billing: "API usage may incur charges; ChatGPT subscriptions are not assumed." } };
 const conversation = { persona: { name: "Saiki", authority: "none", tone: ["dry"], preamble: "This persona controls tone only.", expressions: ["neutral", "talking"] }, messages: [{ id: "t1", role: "tool_result", content: "deploy exit code 1", createdAtUnixMs: 1 }], limits: { maxStoredMessages: 200, maxContextMessages: 24, maxContextBytes: 24576, maxContentBytes: 32768 } };
+const memoryClaim = { id: "m1", claim: "the owner prefers metric units", source: "owner", confidence: 0.8, sensitivity: "private", status: "active", supersedes: null, createdAtUnixMs: 1, updatedAtUnixMs: 1 };
 
 afterEach(cleanup);
 
 beforeEach(() => {
   invoke.mockReset();
-  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : Promise.resolve(undefined));
+  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : Promise.resolve(undefined));
+});
+
+test("memory view shows persisted claims with provenance", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /memory/i }));
+  expect(await screen.findByText("the owner prefers metric units")).toBeInTheDocument();
+  expect(screen.getByText("source: owner")).toBeInTheDocument();
+  expect(screen.getByText("confidence: 0.80")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Forget" })).toBeInTheDocument();
 });
 
 test("conversation persona is non-authoritative and tool results render verbatim", async () => {

@@ -7,6 +7,9 @@ import {
   isOllamaModelList,
   isCloudStatus,
   isConversationView,
+  isMemoryClaim,
+  isMemoryClaimList,
+  isMemoryExport,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -21,6 +24,10 @@ import {
   type ConfigureCloudRequest,
   type ComposedContext,
   type ConversationView,
+  type CorrectMemoryRequest,
+  type MemoryClaim,
+  type MemoryExport,
+  type TeachMemoryRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -62,6 +69,15 @@ export async function appendSaikiMessage(content: string): Promise<ConversationV
 export async function recordToolResult(content: string): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.recordToolResult, { content })); }
 export async function clearConversation(): Promise<ConversationView> { return expectConversation(await invokeTyped(IPC_COMMANDS.clearConversation)); }
 export async function composeConversationContext(): Promise<ComposedContext> { return invokeTyped(IPC_COMMANDS.composeConversationContext); }
+
+function expectClaim(value: unknown): MemoryClaim { if (!isMemoryClaim(value)) throw new Error("Native core returned an invalid memory claim contract."); return value; }
+function expectClaimList(value: unknown): readonly MemoryClaim[] { if (!isMemoryClaimList(value)) throw new Error("Native core returned an invalid memory list contract."); return value; }
+export async function teachMemory(request: TeachMemoryRequest): Promise<MemoryClaim> { return expectClaim(await invokeTyped(IPC_COMMANDS.teachMemory, { request })); }
+export async function correctMemory(request: CorrectMemoryRequest): Promise<MemoryClaim> { return expectClaim(await invokeTyped(IPC_COMMANDS.correctMemory, { request })); }
+export async function forgetMemory(id: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.forgetMemory, { id }); }
+export async function searchMemory(query: string): Promise<readonly MemoryClaim[]> { return expectClaimList(await invokeTyped(IPC_COMMANDS.searchMemory, { query })); }
+export async function listMemory(): Promise<readonly MemoryClaim[]> { return expectClaimList(await invokeTyped(IPC_COMMANDS.listMemory)); }
+export async function exportMemory(): Promise<MemoryExport> { const value: unknown = await invokeTyped(IPC_COMMANDS.exportMemory); if (!isMemoryExport(value)) throw new Error("Native core returned an invalid memory export contract."); return value; }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
