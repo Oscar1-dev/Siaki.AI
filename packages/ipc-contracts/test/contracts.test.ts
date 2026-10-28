@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDocumentSummary, isExpressionEvent, isLipSync, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isVoiceStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isCitationList, isCloudStatus, isCloudStreamEvent, isConversationView, isDecision, isDocumentSummary, isExpressionEvent, isLipSync, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isPolicyState, isShellStatus, isVoiceStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge", "get_voice_status", "configure_voice", "preview_lip_sync", "start_listening", "stop_listening", "interrupt_voice", "cancel_voice"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory", "ingest_document", "list_documents", "forget_document", "retrieve_knowledge", "get_voice_status", "configure_voice", "preview_lip_sync", "start_listening", "stop_listening", "interrupt_voice", "cancel_voice", "get_policy_state", "evaluate_action", "create_grant", "revoke_grant", "request_approval", "resolve_approval", "set_kill_switch", "list_policy_audit"]);
+});
+
+test("policy decisions and state validate; model output cannot be an allow by shape alone", () => {
+  assert.equal(isDecision({ decision: "allow" }), true);
+  assert.equal(isDecision({ decision: "deny", reason: "no grant" }), true);
+  assert.equal(isDecision({ decision: "approval_required", tier: "critical", reason: "owner must approve" }), true);
+  assert.equal(isDecision({ decision: "approval_required", tier: "superuser", reason: "x" }), false);
+  assert.equal(isDecision({ decision: "allowed" }), false);
+  assert.equal(isPolicyState({ killSwitchEngaged: false, grants: [], pendingApprovals: [] }), true);
+  assert.equal(isPolicyState({ killSwitchEngaged: false, grants: [{ id: "g", tier: "bogus" }], pendingApprovals: [] }), false);
 });
 
 test("voice contracts report honest capabilities and a lip-sync timeline", () => {

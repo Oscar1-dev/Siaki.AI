@@ -40,6 +40,14 @@ export const IPC_COMMANDS = {
   stopListening: "stop_listening",
   interruptVoice: "interrupt_voice",
   cancelVoice: "cancel_voice",
+  getPolicyState: "get_policy_state",
+  evaluateAction: "evaluate_action",
+  createGrant: "create_grant",
+  revokeGrant: "revoke_grant",
+  requestApproval: "request_approval",
+  resolveApproval: "resolve_approval",
+  setKillSwitch: "set_kill_switch",
+  listPolicyAudit: "list_policy_audit",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -190,6 +198,71 @@ export interface VoiceStatus {
 }
 export interface ConfigureVoiceRequest { readonly sttModelPath?: string | null; readonly ttsVoicePath?: string | null }
 
+export type RiskTier = "internal" | "low" | "external" | "financial" | "critical";
+export type Decision =
+  | { readonly decision: "allow" }
+  | { readonly decision: "deny"; readonly reason: string }
+  | { readonly decision: "approval_required"; readonly tier: RiskTier; readonly reason: string };
+export interface PolicyGrant {
+  readonly id: string;
+  readonly capability: string;
+  readonly resource: string;
+  readonly purpose: string;
+  readonly tier: RiskTier;
+  readonly maxActions: number;
+  readonly usedActions: number;
+  readonly maxSpend: number | null;
+  readonly spent: number;
+  readonly expiresAtUnixMs: number;
+  readonly createdAtUnixMs: number;
+}
+export interface PolicyApproval {
+  readonly id: string;
+  readonly actor: string;
+  readonly capability: string;
+  readonly resource: string;
+  readonly argumentsDigest: string;
+  readonly status: string;
+  readonly tier: RiskTier;
+  readonly requestedAtUnixMs: number;
+  readonly expiresAtUnixMs: number;
+}
+export interface PolicyState {
+  readonly killSwitchEngaged: boolean;
+  readonly grants: readonly PolicyGrant[];
+  readonly pendingApprovals: readonly PolicyApproval[];
+}
+export interface PolicyAuditEntry {
+  readonly atUnixMs: number;
+  readonly actor: string;
+  readonly capability: string;
+  readonly resource: string;
+  readonly decision: string;
+  readonly reason: string;
+  readonly detail: string;
+}
+export interface EvaluateActionRequest {
+  readonly actor: string;
+  readonly capability: string;
+  readonly resource: string;
+  readonly arguments?: Readonly<Record<string, unknown>>;
+}
+export interface CreateGrantRequest {
+  readonly capability: string;
+  readonly resource: string;
+  readonly purpose: string;
+  readonly maxActions: number;
+  readonly maxSpend?: number | null;
+  readonly ttlMs: number;
+}
+export interface RequestApprovalRequest {
+  readonly actor: string;
+  readonly capability: string;
+  readonly resource: string;
+  readonly arguments?: Readonly<Record<string, unknown>>;
+  readonly ttlMs: number;
+}
+
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -292,6 +365,35 @@ export interface CommandMap {
   readonly stop_listening: { readonly args: undefined; readonly result: VoiceStatus };
   readonly interrupt_voice: { readonly args: undefined; readonly result: VoiceStatus };
   readonly cancel_voice: { readonly args: undefined; readonly result: VoiceStatus };
+  readonly get_policy_state: { readonly args: undefined; readonly result: PolicyState };
+  readonly evaluate_action: { readonly args: { readonly request: EvaluateActionRequest }; readonly result: Decision };
+  readonly create_grant: { readonly args: { readonly request: CreateGrantRequest }; readonly result: PolicyGrant };
+  readonly revoke_grant: { readonly args: { readonly id: string }; readonly result: boolean };
+  readonly request_approval: { readonly args: { readonly request: RequestApprovalRequest }; readonly result: PolicyApproval };
+  readonly resolve_approval: { readonly args: { readonly request: { readonly id: string; readonly approve: boolean } }; readonly result: PolicyApproval };
+  readonly set_kill_switch: { readonly args: { readonly engaged: boolean }; readonly result: PolicyState };
+  readonly list_policy_audit: { readonly args: undefined; readonly result: readonly PolicyAuditEntry[] };
+}
+
+const RISK_TIERS: readonly RiskTier[] = ["internal", "low", "external", "financial", "critical"];
+
+export function isDecision(value: unknown): value is Decision {
+  if (!value || typeof value !== "object") return false;
+  const d = value as Record<string, unknown>;
+  if (d.decision === "allow") return true;
+  if (d.decision === "deny") return typeof d.reason === "string";
+  return d.decision === "approval_required" && RISK_TIERS.includes(d.tier as RiskTier) && typeof d.reason === "string";
+}
+
+export function isPolicyState(value: unknown): value is PolicyState {
+  if (!value || typeof value !== "object") return false;
+  const s = value as Record<string, unknown>;
+  if (typeof s.killSwitchEngaged !== "boolean" || !Array.isArray(s.grants) || !Array.isArray(s.pendingApprovals)) return false;
+  return s.grants.every((g) => Boolean(g) && typeof g === "object" && typeof (g as Record<string, unknown>).id === "string" && RISK_TIERS.includes((g as Record<string, unknown>).tier as RiskTier));
+}
+
+export function isPolicyAuditList(value: unknown): value is readonly PolicyAuditEntry[] {
+  return Array.isArray(value) && value.every((e) => Boolean(e) && typeof e === "object" && typeof (e as Record<string, unknown>).decision === "string" && typeof (e as Record<string, unknown>).capability === "string");
 }
 
 const VISEMES: readonly Viseme[] = ["silence", "pp", "ff", "th", "dd", "kk", "ch", "ss", "nn", "rr", "aa", "ee", "ih", "oh", "ou"];

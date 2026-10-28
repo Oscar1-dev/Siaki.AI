@@ -6,6 +6,7 @@ mod memory;
 mod ollama;
 mod overlay;
 mod persona;
+mod policy;
 mod voice;
 mod workspace;
 
@@ -169,6 +170,7 @@ pub fn run() {
             app.manage(memory::MemoryState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(knowledge::KnowledgeState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(voice::VoiceState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(policy::PolicyEngine::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -247,6 +249,14 @@ pub fn run() {
             voice::stop_listening,
             voice::interrupt_voice,
             voice::cancel_voice
+            ,policy::get_policy_state,
+            policy::evaluate_action,
+            policy::create_grant,
+            policy::revoke_grant,
+            policy::request_approval,
+            policy::resolve_approval,
+            policy::set_kill_switch,
+            policy::list_policy_audit
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

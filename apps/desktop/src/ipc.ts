@@ -15,6 +15,9 @@ import {
   isCitationList,
   isVoiceStatus,
   isLipSync,
+  isDecision,
+  isPolicyState,
+  isPolicyAuditList,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -40,6 +43,14 @@ import {
   type ConfigureVoiceRequest,
   type LipSync,
   type VoiceStatus,
+  type CreateGrantRequest,
+  type Decision,
+  type EvaluateActionRequest,
+  type PolicyApproval,
+  type PolicyAuditEntry,
+  type PolicyGrant,
+  type PolicyState,
+  type RequestApprovalRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -104,6 +115,16 @@ export async function stopListening(): Promise<VoiceStatus> { return expectVoice
 export async function interruptVoice(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.interruptVoice)); }
 export async function cancelVoice(): Promise<VoiceStatus> { return expectVoice(await invokeTyped(IPC_COMMANDS.cancelVoice)); }
 export async function previewLipSync(text: string): Promise<LipSync> { const value: unknown = await invokeTyped(IPC_COMMANDS.previewLipSync, { request: { text } }); if (!isLipSync(value)) throw new Error("Native core returned an invalid lip-sync contract."); return value; }
+
+function expectPolicyState(value: unknown): PolicyState { if (!isPolicyState(value)) throw new Error("Native core returned an invalid policy state contract."); return value; }
+export async function getPolicyState(): Promise<PolicyState> { return expectPolicyState(await invokeTyped(IPC_COMMANDS.getPolicyState)); }
+export async function evaluateAction(request: EvaluateActionRequest): Promise<Decision> { const value: unknown = await invokeTyped(IPC_COMMANDS.evaluateAction, { request }); if (!isDecision(value)) throw new Error("Native core returned an invalid policy decision contract."); return value; }
+export async function createGrant(request: CreateGrantRequest): Promise<PolicyGrant> { return invokeTyped(IPC_COMMANDS.createGrant, { request }); }
+export async function revokeGrant(id: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.revokeGrant, { id }); }
+export async function requestApproval(request: RequestApprovalRequest): Promise<PolicyApproval> { return invokeTyped(IPC_COMMANDS.requestApproval, { request }); }
+export async function resolveApproval(id: string, approve: boolean): Promise<PolicyApproval> { return invokeTyped(IPC_COMMANDS.resolveApproval, { request: { id, approve } }); }
+export async function setKillSwitch(engaged: boolean): Promise<PolicyState> { return expectPolicyState(await invokeTyped(IPC_COMMANDS.setKillSwitch, { engaged })); }
+export async function listPolicyAudit(): Promise<readonly PolicyAuditEntry[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listPolicyAudit); if (!isPolicyAuditList(value)) throw new Error("Native core returned an invalid audit contract."); return value; }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
