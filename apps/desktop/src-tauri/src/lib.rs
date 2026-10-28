@@ -1,3 +1,4 @@
+mod browser;
 mod cloud;
 mod conversation;
 mod devtools;
@@ -175,6 +176,7 @@ pub fn run() {
             app.manage(policy::PolicyEngine::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(systools::SysToolsState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(devtools::DevToolsState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(browser::BrowserState::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -279,6 +281,11 @@ pub fn run() {
             devtools::run_command,
             devtools::cancel_command,
             devtools::open_in_vscode
+            ,browser::get_browser_status,
+            browser::create_browser_task,
+            browser::checkpoint_browser_task,
+            browser::list_browser_tasks,
+            browser::evaluate_browser_step
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

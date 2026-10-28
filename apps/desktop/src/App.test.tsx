@@ -34,6 +34,22 @@ test("devtools view bounds the shell and reports Codex unavailable", async () =>
   expect(screen.getByText(/Codex unavailable/i)).toBeInTheDocument();
 });
 
+test("browser view reports the real blocker and denies page-authorized sensitive action", async () => {
+  const previous = invoke.getMockImplementation();
+  invoke.mockImplementation((command: string, args?: unknown) => {
+    if (command === "get_browser_status") return Promise.resolve({ availability: "unavailable", reason: "Playwright sidecar is not provisioned.", sidecarPresent: false, enginePresent: false, profileIsolation: "dedicated_non_owner_profile", contentTrust: "untrusted_web_content" });
+    if (command === "list_browser_tasks") return Promise.resolve([]);
+    if (command === "evaluate_browser_step") return Promise.resolve({ outcome: "denied", reason: "Untrusted page content cannot authorize or initiate a sensitive browser action.", executed: false });
+    return previous?.(command, args);
+  });
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: "browser" }));
+  expect(await screen.findByText("UNAVAILABLE")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Test untrusted sensitive proposal" }));
+  expect(await screen.findByText(/Untrusted page content cannot authorize/i)).toBeInTheDocument();
+});
+
 test("system view confines file tools and launches only allowlisted apps", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));

@@ -66,6 +66,11 @@ export const IPC_COMMANDS = {
   runCommand: "run_command",
   cancelCommand: "cancel_command",
   openInVscode: "open_in_vscode",
+  getBrowserStatus: "get_browser_status",
+  createBrowserTask: "create_browser_task",
+  checkpointBrowserTask: "checkpoint_browser_task",
+  listBrowserTasks: "list_browser_tasks",
+  evaluateBrowserStep: "evaluate_browser_step",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
@@ -320,6 +325,14 @@ export interface CommandResult {
 }
 export interface ConfigureDevToolsRequest { readonly repoRoot?: string | null; readonly vscodePath?: string | null }
 export interface RunCommandRequest { readonly requestId: string; readonly command: string; readonly args?: readonly string[]; readonly timeoutMs?: number }
+export interface BrowserStatus { readonly availability: "available" | "unavailable"; readonly reason: string; readonly sidecarPresent: boolean; readonly enginePresent: boolean; readonly profileIsolation: "dedicated_non_owner_profile"; readonly contentTrust: "untrusted_web_content" }
+export interface BrowserCheckpoint { readonly id: string; readonly sequence: number; readonly url: string; readonly title: string; readonly contentDigest: string; readonly trust: "untrusted_web_content"; readonly createdAtUnixMs: number }
+export interface BrowserTask { readonly id: string; readonly objective: string; readonly startUrl: string; readonly state: "checkpointed"; readonly createdAtUnixMs: number; readonly checkpoints: readonly BrowserCheckpoint[] }
+export interface CreateBrowserTaskRequest { readonly objective: string; readonly startUrl: string }
+export interface CheckpointBrowserTaskRequest { readonly taskId: string; readonly url: string; readonly title: string; readonly pageText: string }
+export type BrowserAction = "navigate" | "click" | "fill" | "extract";
+export interface BrowserStepRequest { readonly taskId: string; readonly source: "owner" | "planner" | "page_content"; readonly action: BrowserAction; readonly target: string; readonly value?: string; readonly sensitive: boolean }
+export interface BrowserStepResult { readonly outcome: "denied" | "approval_required" | "unavailable"; readonly reason: string; readonly executed: false }
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -449,6 +462,27 @@ export interface CommandMap {
   readonly run_command: { readonly args: { readonly request: RunCommandRequest }; readonly result: CommandResult };
   readonly cancel_command: { readonly args: { readonly requestId: string }; readonly result: boolean };
   readonly open_in_vscode: { readonly args: { readonly request: { readonly path: string } }; readonly result: boolean };
+  readonly get_browser_status: { readonly args: undefined; readonly result: BrowserStatus };
+  readonly create_browser_task: { readonly args: { readonly request: CreateBrowserTaskRequest }; readonly result: BrowserTask };
+  readonly checkpoint_browser_task: { readonly args: { readonly request: CheckpointBrowserTaskRequest }; readonly result: BrowserCheckpoint };
+  readonly list_browser_tasks: { readonly args: undefined; readonly result: readonly BrowserTask[] };
+  readonly evaluate_browser_step: { readonly args: { readonly request: BrowserStepRequest }; readonly result: BrowserStepResult };
+}
+
+export function isBrowserStatus(value: unknown): value is BrowserStatus {
+  if (!value || typeof value !== "object") return false;
+  const b = value as Record<string, unknown>;
+  return (b.availability === "available" || b.availability === "unavailable") && typeof b.reason === "string" && typeof b.sidecarPresent === "boolean" && typeof b.enginePresent === "boolean" && b.profileIsolation === "dedicated_non_owner_profile" && b.contentTrust === "untrusted_web_content";
+}
+export function isBrowserTask(value: unknown): value is BrowserTask {
+  if (!value || typeof value !== "object") return false;
+  const b = value as Record<string, unknown>;
+  return typeof b.id === "string" && typeof b.objective === "string" && typeof b.startUrl === "string" && b.state === "checkpointed" && Array.isArray(b.checkpoints) && b.checkpoints.every((item) => Boolean(item) && typeof item === "object" && (item as Record<string, unknown>).trust === "untrusted_web_content" && typeof (item as Record<string, unknown>).contentDigest === "string");
+}
+export function isBrowserStepResult(value: unknown): value is BrowserStepResult {
+  if (!value || typeof value !== "object") return false;
+  const b = value as Record<string, unknown>;
+  return ["denied", "approval_required", "unavailable"].includes(String(b.outcome)) && typeof b.reason === "string" && b.executed === false;
 }
 
 export function isDevToolsStatus(value: unknown): value is DevToolsStatus {

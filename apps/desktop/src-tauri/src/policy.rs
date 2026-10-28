@@ -195,6 +195,11 @@ pub struct PolicyEngine {
 }
 
 impl PolicyEngine {
+    #[cfg(test)]
+    pub(crate) fn test_engine() -> Self {
+        Self::from_connection(Connection::open_in_memory().expect("in-memory policy database"))
+            .expect("policy schema")
+    }
     pub fn load(data_dir: &Path) -> Result<Self, String> {
         std::fs::create_dir_all(data_dir).map_err(|_| "create policy directory failed")?;
         let connection = Connection::open(data_dir.join("policy.sqlite3"))

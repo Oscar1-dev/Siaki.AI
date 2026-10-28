@@ -25,6 +25,9 @@ import {
   isDevToolsStatus,
   isGitStatus,
   isCommandResult,
+  isBrowserStatus,
+  isBrowserTask,
+  isBrowserStepResult,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -70,6 +73,13 @@ import {
   type GitDiff,
   type GitStatus,
   type RunCommandRequest,
+  type BrowserStatus,
+  type BrowserTask,
+  type BrowserCheckpoint,
+  type BrowserStepRequest,
+  type BrowserStepResult,
+  type CreateBrowserTaskRequest,
+  type CheckpointBrowserTaskRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -166,6 +176,11 @@ export async function gitDiff(path?: string): Promise<GitDiff> { return invokeTy
 export async function runCommand(request: RunCommandRequest): Promise<CommandResult> { const value: unknown = await invokeTyped(IPC_COMMANDS.runCommand, { request }); if (!isCommandResult(value)) throw new Error("Native core returned an invalid command-result contract."); return value; }
 export async function cancelCommand(requestId: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.cancelCommand, { requestId }); }
 export async function openInVscode(path: string): Promise<boolean> { return invokeTyped(IPC_COMMANDS.openInVscode, { request: { path } }); }
+export async function getBrowserStatus(): Promise<BrowserStatus> { const value: unknown = await invokeTyped(IPC_COMMANDS.getBrowserStatus); if (!isBrowserStatus(value)) throw new Error("Native core returned an invalid browser status contract."); return value; }
+export async function createBrowserTask(request: CreateBrowserTaskRequest): Promise<BrowserTask> { const value: unknown = await invokeTyped(IPC_COMMANDS.createBrowserTask, { request }); if (!isBrowserTask(value)) throw new Error("Native core returned an invalid browser task contract."); return value; }
+export async function checkpointBrowserTask(request: CheckpointBrowserTaskRequest): Promise<BrowserCheckpoint> { return invokeTyped(IPC_COMMANDS.checkpointBrowserTask, { request }); }
+export async function listBrowserTasks(): Promise<readonly BrowserTask[]> { const value: unknown = await invokeTyped(IPC_COMMANDS.listBrowserTasks); if (!Array.isArray(value) || !value.every(isBrowserTask)) throw new Error("Native core returned invalid browser tasks."); return value; }
+export async function evaluateBrowserStep(request: BrowserStepRequest): Promise<BrowserStepResult> { const value: unknown = await invokeTyped(IPC_COMMANDS.evaluateBrowserStep, { request }); if (!isBrowserStepResult(value)) throw new Error("Native core returned an invalid browser decision contract."); return value; }
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
