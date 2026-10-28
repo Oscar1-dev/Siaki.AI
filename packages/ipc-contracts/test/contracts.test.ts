@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isCloudStatus, isCloudStreamEvent, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat"]);
+});
+
+test("cloud contracts require disclosure and explicit outcomes", () => {
+  const status = { enabled: false, model: "", credentialPresent: false, credentialStore: "windows_credential_manager", endpoint: "https://api.openai.com/v1/responses", disclosure: { destination: "OpenAI API", data: ["message", "model"], storageRequested: false, billing: "API billing applies" } };
+  assert.equal(isCloudStatus(status), true);
+  assert.equal(isCloudStatus({ ...status, credentialStore: "renderer_local_storage" }), false);
+  assert.equal(isCloudStreamEvent({ kind: "finished", request_id: "id", outcome: "succeeded" }), true);
+  assert.equal(isCloudStreamEvent({ kind: "finished", request_id: "id", outcome: "authorized" }), false);
 });
 
 test("Ollama contracts reject malformed discovery and trusted tool results", () => {
