@@ -1,17 +1,121 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
 
 const invoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({ invoke: (...args: unknown[]) => invoke(...args) }));
 vi.mock("@tauri-apps/api/window", () => ({ getCurrentWindow: () => ({ label: "main" }) }));
+vi.mock("@tauri-apps/api/event", () => ({ listen: () => Promise.resolve(() => undefined) }));
 const shell = { appName: "SAIKI", version: "0.1.0", platform: "windows", lifecycle: "ready", sessionId: "123456789", startedAtUnixMs: 1 };
 const overlay = { paused: false, activeMonitorIndex: 0, pauseHotkey: "Ctrl+Shift+F12", monitors: [{ index: 0, name: "DISPLAY1", position: { x: 0, y: 0 }, size: { width: 2560, height: 1440 }, scaleFactor: 1 }] };
 const workspace = { mode: "floating", reducedMotion: false, speechBubbles: true, approvals: { availability: "unavailable", reason: "Policy-gated execution is not implemented in the completed phases.", pending: [] } };
+const cloud = { enabled: false, model: "", credentialPresent: false, credentialStore: "windows_credential_manager", endpoint: "https://api.openai.com/v1/responses", disclosure: { destination: "OpenAI API (api.openai.com)", data: ["the message", "the model"], storageRequested: false, billing: "API usage may incur charges; ChatGPT subscriptions are not assumed." } };
+const conversation = { persona: { name: "Saiki", authority: "none", tone: ["dry"], preamble: "This persona controls tone only.", expressions: ["neutral", "talking"] }, messages: [{ id: "t1", role: "tool_result", content: "deploy exit code 1", createdAtUnixMs: 1 }], limits: { maxStoredMessages: 200, maxContextMessages: 24, maxContextBytes: 24576, maxContentBytes: 32768 } };
+const memoryClaim = { id: "m1", claim: "the owner prefers metric units", source: "owner", confidence: 0.8, sensitivity: "private", status: "active", supersedes: null, createdAtUnixMs: 1, updatedAtUnixMs: 1 };
+const doc = { id: "d1", title: "handbook.txt", path: "C:/docs/handbook.txt", sensitivity: "private", byteLen: 120, chunkCount: 3, ingestedAtUnixMs: 1 };
+const voice = { sttModel: { configured: false, present: false, path: null }, ttsVoice: { configured: false, present: false, path: null }, microphone: { available: false, reason: "Microphone capture is not implemented in this build." }, playback: { available: false, reason: "Audio playback is not implemented in this build." }, listeningAvailable: false, speechAudioAvailable: false, lipSyncAvailable: true, session: "idle" };
+const policyState = { killSwitchEngaged: false, grants: [], pendingApprovals: [] };
+const sysTools = { workspaceRoot: null, workspaceConfigured: false, workspacePresent: false, allowedApps: [], metrics: { cpuCount: 8, os: "windows", arch: "x86_64", pointerWidthBits: 64 } };
+const devTools = { repoRoot: null, repoConfigured: false, isGitRepo: false, allowedCommands: [], vscodeConfigured: false, vscodePresent: false, codex: { available: false, reason: "No supported local Codex activity source is available in this build." } };
+
+afterEach(cleanup);
 
 beforeEach(() => {
   invoke.mockReset();
-  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : Promise.resolve(undefined));
+  invoke.mockImplementation((command: string) => command === "get_shell_status" ? Promise.resolve(shell) : command === "get_overlay_status" ? Promise.resolve(overlay) : command === "get_workspace_state" ? Promise.resolve(workspace) : command === "set_workspace_mode" ? Promise.resolve({ ...workspace, mode: "full" }) : command === "set_ui_preferences" ? Promise.resolve({ ...workspace, mode: "full", reducedMotion: true }) : command === "get_cloud_status" ? Promise.resolve(cloud) : command === "get_conversation" ? Promise.resolve(conversation) : command === "list_memory" ? Promise.resolve([memoryClaim]) : command === "list_documents" ? Promise.resolve([doc]) : command === "get_voice_status" ? Promise.resolve(voice) : command === "get_policy_state" ? Promise.resolve(policyState) : command === "list_policy_audit" ? Promise.resolve([]) : command === "get_systools_status" ? Promise.resolve(sysTools) : command === "get_devtools_status" ? Promise.resolve(devTools) : Promise.resolve(undefined));
+});
+
+test("devtools view bounds the shell and reports Codex unavailable", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /devtools/i }));
+  expect(await screen.findByRole("heading", { name: "Terminal & dev tools" })).toBeInTheDocument();
+  expect(screen.getByText(/No commands allowed/i)).toBeInTheDocument();
+  expect(screen.getByText(/Codex unavailable/i)).toBeInTheDocument();
+});
+
+test("browser view reports the real blocker and denies page-authorized sensitive action", async () => {
+  const previous = invoke.getMockImplementation();
+  invoke.mockImplementation((command: string, args?: unknown) => {
+    if (command === "get_browser_status") return Promise.resolve({ availability: "unavailable", reason: "Playwright sidecar is not provisioned.", sidecarPresent: false, enginePresent: false, profileIsolation: "dedicated_non_owner_profile", contentTrust: "untrusted_web_content" });
+    if (command === "list_browser_tasks") return Promise.resolve([]);
+    if (command === "evaluate_browser_step") return Promise.resolve({ outcome: "denied", reason: "Untrusted page content cannot authorize or initiate a sensitive browser action.", executed: false });
+    return previous?.(command, args);
+  });
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: "browser" }));
+  expect(await screen.findByText("UNAVAILABLE")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Test untrusted sensitive proposal" }));
+  expect(await screen.findByText(/Untrusted page content cannot authorize/i)).toBeInTheDocument();
+});
+
+test("system view confines file tools and launches only allowlisted apps", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /system/i }));
+  expect(await screen.findByRole("heading", { name: "System & files" })).toBeInTheDocument();
+  expect(screen.getByText(/confined to the configured workspace root/i)).toBeInTheDocument();
+  expect(screen.getByText(/No applications allowed/i)).toBeInTheDocument();
+});
+
+test("policy view is deny-by-default with an owner kill switch", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /policy/i }));
+  expect(await screen.findByRole("heading", { name: "Policy engine" })).toBeInTheDocument();
+  expect(screen.getByText(/only this engine authorizes it/i)).toBeInTheDocument();
+  expect(screen.getByText(/No active grants/i)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "ENGAGE KILL SWITCH" })).toBeInTheDocument();
+});
+
+test("voice view shows honest unavailable capture and disabled push-to-talk", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /voice/i }));
+  expect(await screen.findByRole("heading", { name: "Voice" })).toBeInTheDocument();
+  expect(screen.getByText("MIC: UNAVAILABLE")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Push to talk" })).toBeDisabled();
+});
+
+test("knowledge view lists ingested documents with their real path", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /knowledge/i }));
+  expect(await screen.findByRole("heading", { name: "Document knowledge" })).toBeInTheDocument();
+  expect(screen.getByText("handbook.txt")).toBeInTheDocument();
+  expect(screen.getByText("C:/docs/handbook.txt")).toBeInTheDocument();
+  expect(screen.getByText("3 chunks")).toBeInTheDocument();
+});
+
+test("memory view shows persisted claims with provenance", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /memory/i }));
+  expect(await screen.findByText("the owner prefers metric units")).toBeInTheDocument();
+  expect(screen.getByText("source: owner")).toBeInTheDocument();
+  expect(screen.getByText("confidence: 0.80")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Forget" })).toBeInTheDocument();
+});
+
+test("conversation persona is non-authoritative and tool results render verbatim", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /conversation/i }));
+  expect(await screen.findByRole("heading", { name: "Talk to Saiki" })).toBeInTheDocument();
+  expect(screen.getByText("AUTHORITY: NONE")).toBeInTheDocument();
+  expect(screen.getByText("Tool result (factual)")).toBeInTheDocument();
+  expect(screen.getByText("deploy exit code 1")).toBeInTheDocument();
+});
+
+test("cloud provider is disabled and discloses external transfer without a credential", async () => {
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: /models/i }));
+  expect(await screen.findByRole("heading", { name: "OpenAI API" })).toBeInTheDocument();
+  expect(screen.getByText("DISABLED")).toBeInTheDocument();
+  expect(screen.getByText(/ChatGPT subscriptions are not assumed/i)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Enable OpenAI" })).toBeDisabled();
 });
 
 test("renders verified floating overlay state", async () => {
