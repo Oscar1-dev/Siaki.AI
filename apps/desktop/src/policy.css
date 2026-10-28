@@ -1,0 +1,26 @@
+.policy{gap:16px}
+.policy .kill{align-self:center;padding:8px 14px;border:1px solid #6e3b3b;background:#1c0f0f;color:#e0a3a3;font:inherit;letter-spacing:.04em}
+.policy .kill.engaged{background:#3a1414;color:#ffd4d4;border-color:#a04b4b}
+.policy .evaluator,.policy .grant-form,.policy .policy-list{display:grid;gap:12px;padding:14px;border:1px solid #26384a}
+.policy h2{margin:0;font-size:16px;font-weight:500}
+.policy .eval-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.policy .eval-row .model-field{flex:1;min-width:160px}
+.policy input{width:100%;box-sizing:border-box;border:1px solid #30465c;background:#09121d;color:#e5f2ff;padding:10px;font:inherit}
+.policy button{padding:9px 13px;border:1px solid #30465c;background:#111b27;color:#e5f2ff;font:inherit}
+.policy button:disabled{opacity:.45;cursor:not-allowed}
+.policy .decision{padding:10px 13px;font-weight:500;border:1px solid #30465c}
+.policy .decision-allow{color:#8fd0b4;border-color:#36624f;background:rgba(30,60,48,.3)}
+.policy .decision-deny{color:#e0a3a3;border-color:#6e3b3b;background:rgba(58,20,20,.3)}
+.policy .decision-approval_required{color:#d8c48a;border-color:#6e5d32;background:rgba(49,38,15,.3)}
+.policy .empty-note{color:#7f94a8;margin:0}
+.policy .grant{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid #223344;background:#0b1622}
+.policy .grant small{display:block;color:#8aa0b4;margin-top:3px}
+.policy .approve-actions{display:flex;gap:8px}
+.policy .tier{padding:1px 7px;border:1px solid #30465c;border-radius:999px;font-size:10px;text-transform:uppercase}
+.policy .tier-internal{color:#8fd0b4}.policy .tier-low{color:#8fb7d0}.policy .tier-external{color:#d8c48a}.policy .tier-financial{color:#e0b48a;border-color:#6e5332}.policy .tier-critical{color:#e0a3a3;border-color:#6e3b3b}
+.policy .danger-button{border-color:#6e3b3b!important;color:#e0a3a3!important}
+.policy .audit{display:grid;grid-template-columns:120px 150px 1fr;gap:10px;padding:5px 8px;border-bottom:1px solid #1a2836;font-size:11px}
+.policy .a-decision{text-transform:uppercase;letter-spacing:.05em}
+.policy .audit-allow .a-decision{color:#8fd0b4}.policy .audit-deny .a-decision{color:#e0a3a3}.policy .audit-approval_required .a-decision{color:#d8c48a}
+.policy .a-cap{color:#c8d6e4}.policy .a-detail{color:#8aa0b4}
+@media (max-width:720px){.policy .audit{grid-template-columns:1fr}}
