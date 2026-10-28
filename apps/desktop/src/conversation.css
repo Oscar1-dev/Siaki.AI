@@ -1,0 +1,17 @@
+.conversation{gap:16px}
+.conversation .authority-badge{align-self:center;padding:5px 10px;border:1px solid #30465c;background:#09121d;color:#8fd0b4;font-size:11px;letter-spacing:.08em}
+.conversation .transcript{display:grid;gap:12px;max-height:46vh;overflow-y:auto;padding:4px}
+.conversation .empty-note{color:#7f94a8;margin:0}
+.conversation .turn{display:grid;gap:6px;padding:12px 14px;border:1px solid #26384a;background:#0b1622}
+.conversation .turn header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.conversation .turn header b{font-weight:500;font-size:13px}
+.conversation .turn pre{margin:0;white-space:pre-wrap;word-break:break-word;font:inherit;color:#dbe8f5}
+.conversation .turn-owner{border-left:3px solid #3f6b9c}
+.conversation .turn-saiki{border-left:3px solid #7d5fb0}
+.conversation .turn-tool_result{border-left:3px solid #b08a3f;background:rgba(49,38,15,.3)}
+.conversation .turn-tool_result b{color:#d8c48a}
+.conversation .expression-badge{padding:2px 8px;border:1px solid #30465c;border-radius:999px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#a9bcd0}
+.conversation textarea{width:100%;box-sizing:border-box;border:1px solid #30465c;background:#09121d;color:#e5f2ff;padding:12px;font:inherit;resize:vertical}
+.conversation .tool-result-panel{border:1px solid #26384a;padding:12px 14px}
+.conversation .tool-result-panel summary{cursor:pointer;color:#c8b98e;font-size:13px}
+.conversation .tool-result-panel .scope-note{margin-top:10px}

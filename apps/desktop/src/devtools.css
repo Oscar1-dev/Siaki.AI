@@ -1,0 +1,28 @@
+.devtools{gap:16px}
+.devtools .repo-config{display:flex;gap:12px;align-items:flex-end}
+.devtools .repo-config .model-field{flex:1}
+.devtools input{width:100%;box-sizing:border-box;border:1px solid #30465c;background:#09121d;color:#e5f2ff;padding:10px;font:inherit}
+.devtools button{padding:9px 13px;border:1px solid #30465c;background:#111b27;color:#e5f2ff;font:inherit}
+.devtools button:disabled{opacity:.45;cursor:not-allowed}
+.devtools .empty-note{color:#7f94a8;margin:0}
+.devtools .capability-row{display:flex;flex-wrap:wrap;gap:8px}
+.devtools .cap{padding:4px 10px;border:1px solid #30465c;border-radius:999px;font-size:11px}
+.devtools .cap.ok{color:#8fd0b4;border-color:#36624f}
+.devtools .cap.off{color:#9fb3c8}
+.devtools .git-panel,.devtools .allowlist,.devtools .runner{display:grid;gap:10px;padding:14px;border:1px solid #26384a}
+.devtools h2{margin:0;font-size:16px;font-weight:500}
+.devtools .git-actions,.devtools .run-row,.devtools .add-chip{display:flex;gap:8px;flex-wrap:wrap}
+.devtools .run-row input{flex:1;min-width:120px}
+.devtools .git-status ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:13px}
+.devtools .git-status code{color:#d8c48a}
+.devtools .git-diff{margin:0;max-height:34vh;overflow:auto;background:#09121d;border:1px solid #223344;padding:10px;font-family:ui-monospace,monospace;font-size:12px;white-space:pre}
+.devtools .chips{display:flex;flex-wrap:wrap;gap:6px}
+.devtools .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;border:1px solid #30465c;border-radius:999px;font-size:12px}
+.devtools .chip button{padding:0 4px;border:none;background:transparent;color:#e0a3a3}
+.devtools .run-result{border:1px solid #223344;padding:10px;display:grid;gap:8px}
+.devtools .run-head{display:flex;justify-content:space-between;font-size:12px}
+.devtools .outcome-succeeded .run-head b{color:#8fd0b4}
+.devtools .outcome-denied .run-head b,.devtools .outcome-failed .run-head b,.devtools .outcome-unavailable .run-head b{color:#e0a3a3}
+.devtools .run-result pre{margin:0;max-height:26vh;overflow:auto;font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
+.devtools .run-stderr{color:#e0b4b4}
+@media (max-width:720px){.devtools .repo-config{flex-direction:column;align-items:stretch}}

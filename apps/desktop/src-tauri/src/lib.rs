@@ -1,7 +1,19 @@
+mod browser;
+mod cloud;
+mod conversation;
+mod devtools;
+mod knowledge;
 mod logging;
+mod memory;
 mod ollama;
 mod overlay;
+mod persona;
+mod policy;
+mod scheduler;
+mod systools;
+mod voice;
 mod workspace;
+mod world;
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -9,7 +21,7 @@ use std::{
     sync::Mutex,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use tauri::{Manager, RunEvent, State};
+use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 #[derive(Debug)]
@@ -157,6 +169,27 @@ pub fn run() {
         .manage(ollama::OllamaState::new())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
+            let config_dir = app.path().app_config_dir().map_err(|error| format!("resolve config directory: {error}"))?;
+            app.manage(cloud::CloudState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(conversation::ConversationState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(memory::MemoryState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(knowledge::KnowledgeState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(voice::VoiceState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(policy::PolicyEngine::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(systools::SysToolsState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(devtools::DevToolsState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(browser::BrowserState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(scheduler::SchedulerState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(world::WorldState::load(&config_dir).map_err(std::io::Error::other)?);
+            let scheduler_handle = app.handle().clone();
+            std::thread::spawn(move || loop {
+                std::thread::sleep(Duration::from_secs(1));
+                let state = scheduler_handle.state::<scheduler::SchedulerState>();
+                match scheduler::wake(&state) {
+                    Ok(notifications) => for notification in notifications { let _ = scheduler_handle.emit("saiki://reminder", notification); },
+                    Err(error) => log::warn!(target:"saiki.scheduler", "event=scheduler.wake_failed error={error}"),
+                }
+            });
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -206,6 +239,74 @@ pub fn run() {
             ollama::discover_ollama_models,
             ollama::start_ollama_chat,
             ollama::cancel_ollama_chat
+            ,cloud::get_cloud_status,
+            cloud::import_openai_key_from_environment,
+            cloud::delete_openai_key,
+            cloud::configure_cloud_provider,
+            cloud::start_cloud_chat,
+            cloud::cancel_cloud_chat
+            ,conversation::get_conversation,
+            conversation::append_owner_message,
+            conversation::append_saiki_message,
+            conversation::record_tool_result,
+            conversation::clear_conversation,
+            conversation::compose_conversation_context
+            ,memory::teach_memory,
+            memory::correct_memory,
+            memory::forget_memory,
+            memory::search_memory,
+            memory::list_memory,
+            memory::export_memory
+            ,knowledge::ingest_document,
+            knowledge::list_documents,
+            knowledge::forget_document,
+            knowledge::retrieve_knowledge
+            ,voice::get_voice_status,
+            voice::configure_voice,
+            voice::preview_lip_sync,
+            voice::start_listening,
+            voice::stop_listening,
+            voice::interrupt_voice,
+            voice::cancel_voice
+            ,policy::get_policy_state,
+            policy::evaluate_action,
+            policy::create_grant,
+            policy::revoke_grant,
+            policy::request_approval,
+            policy::resolve_approval,
+            policy::set_kill_switch,
+            policy::list_policy_audit
+            ,systools::get_systools_status,
+            systools::configure_workspace,
+            systools::add_allowed_app,
+            systools::remove_allowed_app,
+            systools::launch_app,
+            systools::read_workspace_file,
+            systools::list_workspace_dir,
+            systools::write_workspace_file,
+            systools::rollback_write
+            ,devtools::get_devtools_status,
+            devtools::configure_devtools,
+            devtools::add_allowed_command,
+            devtools::remove_allowed_command,
+            devtools::git_status,
+            devtools::git_diff,
+            devtools::run_command,
+            devtools::cancel_command,
+            devtools::open_in_vscode
+            ,browser::get_browser_status,
+            browser::create_browser_task,
+            browser::checkpoint_browser_task,
+            browser::list_browser_tasks,
+            browser::evaluate_browser_step
+            ,scheduler::get_scheduler_snapshot,
+            scheduler::create_scheduled_task,
+            scheduler::cancel_scheduled_task,
+            scheduler::acknowledge_notification
+            ,world::get_world_snapshot,
+            world::list_world_events,
+            world::create_world_project,
+            world::transition_world_project
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");
