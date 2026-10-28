@@ -11,9 +11,23 @@ export const IPC_COMMANDS = {
   discoverOllamaModels: "discover_ollama_models",
   startOllamaChat: "start_ollama_chat",
   cancelOllamaChat: "cancel_ollama_chat",
+  getCloudStatus: "get_cloud_status",
+  importOpenAiKeyFromEnvironment: "import_openai_key_from_environment",
+  deleteOpenAiKey: "delete_openai_key",
+  configureCloudProvider: "configure_cloud_provider",
+  startCloudChat: "start_cloud_chat",
+  cancelCloudChat: "cancel_cloud_chat",
+  getConversation: "get_conversation",
+  appendOwnerMessage: "append_owner_message",
+  appendSaikiMessage: "append_saiki_message",
+  recordToolResult: "record_tool_result",
+  clearConversation: "clear_conversation",
+  composeConversationContext: "compose_conversation_context",
 } as const;
 
 export const OLLAMA_STREAM_EVENT = "saiki://ollama-stream" as const;
+export const OPENAI_STREAM_EVENT = "saiki://openai-stream" as const;
+export const EXPRESSION_EVENT = "saiki://expression" as const;
 
 export interface OllamaModel { readonly name: string; readonly size: number; readonly digest: string; readonly modifiedAt: string }
 export interface ToolDefinition { readonly name: string; readonly description: string; readonly parameters: Readonly<Record<string, unknown>> }
@@ -23,6 +37,56 @@ export type OllamaStreamEvent =
   | { readonly kind: "tool_proposal"; readonly request_id: string; readonly proposal: { readonly name: string; readonly arguments: unknown; readonly trust: "untrusted_model_output" } }
   | { readonly kind: "finished"; readonly request_id: string; readonly outcome: "succeeded" | "cancelled" }
   | { readonly kind: "failed"; readonly request_id: string; readonly outcome: "failed" | "unavailable"; readonly message: string };
+
+export interface CloudStatus {
+  readonly enabled: boolean;
+  readonly model: string;
+  readonly credentialPresent: boolean;
+  readonly credentialStore: "windows_credential_manager";
+  readonly endpoint: "https://api.openai.com/v1/responses";
+  readonly disclosure: { readonly destination: string; readonly data: readonly [string, string]; readonly storageRequested: false; readonly billing: string };
+}
+export interface ConfigureCloudRequest { readonly enabled: boolean; readonly model: string; readonly disclosureAccepted: boolean }
+export interface CloudChatRequest { readonly requestId: string; readonly prompt: string; readonly timeoutMs?: number }
+export type CloudStreamEvent =
+  | { readonly kind: "chunk"; readonly request_id: string; readonly content: string }
+  | { readonly kind: "finished"; readonly request_id: string; readonly outcome: "succeeded" | "cancelled" }
+  | { readonly kind: "failed"; readonly request_id: string; readonly outcome: "failed" | "unavailable"; readonly message: string };
+
+export type Expression = "neutral" | "talking" | "focused" | "annoyed" | "surprised" | "tired";
+export type MessageRole = "owner" | "saiki" | "tool_result";
+export interface ConversationMessage {
+  readonly id: string;
+  readonly role: MessageRole;
+  readonly content: string;
+  readonly createdAtUnixMs: number;
+  readonly expression?: Expression;
+}
+export interface PersonaSummary {
+  readonly name: string;
+  readonly authority: "none";
+  readonly tone: readonly string[];
+  readonly preamble: string;
+  readonly expressions: readonly Expression[];
+}
+export interface ConversationLimits {
+  readonly maxStoredMessages: number;
+  readonly maxContextMessages: number;
+  readonly maxContextBytes: number;
+  readonly maxContentBytes: number;
+}
+export interface ConversationView {
+  readonly persona: PersonaSummary;
+  readonly messages: readonly ConversationMessage[];
+  readonly limits: ConversationLimits;
+}
+export interface ComposedContext {
+  readonly prompt: string;
+  readonly includedMessages: number;
+}
+export interface ExpressionEvent {
+  readonly expression: Expression;
+}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -97,6 +161,59 @@ export interface CommandMap {
   readonly discover_ollama_models: { readonly args: undefined; readonly result: readonly OllamaModel[] };
   readonly start_ollama_chat: { readonly args: { readonly request: OllamaChatRequest }; readonly result: { readonly requestId: string } };
   readonly cancel_ollama_chat: { readonly args: { readonly requestId: string }; readonly result: boolean };
+  readonly get_cloud_status: { readonly args: undefined; readonly result: CloudStatus };
+  readonly import_openai_key_from_environment: { readonly args: undefined; readonly result: CloudStatus };
+  readonly delete_openai_key: { readonly args: undefined; readonly result: CloudStatus };
+  readonly configure_cloud_provider: { readonly args: { readonly request: ConfigureCloudRequest }; readonly result: CloudStatus };
+  readonly start_cloud_chat: { readonly args: { readonly request: CloudChatRequest }; readonly result: { readonly requestId: string } };
+  readonly cancel_cloud_chat: { readonly args: { readonly requestId: string }; readonly result: boolean };
+  readonly get_conversation: { readonly args: undefined; readonly result: ConversationView };
+  readonly append_owner_message: { readonly args: { readonly content: string }; readonly result: ConversationView };
+  readonly append_saiki_message: { readonly args: { readonly content: string }; readonly result: ConversationView };
+  readonly record_tool_result: { readonly args: { readonly content: string }; readonly result: ConversationView };
+  readonly clear_conversation: { readonly args: undefined; readonly result: ConversationView };
+  readonly compose_conversation_context: { readonly args: undefined; readonly result: ComposedContext };
+}
+
+const EXPRESSIONS: readonly Expression[] = ["neutral", "talking", "focused", "annoyed", "surprised", "tired"];
+
+export function isConversationView(value: unknown): value is ConversationView {
+  if (!value || typeof value !== "object") return false;
+  const view = value as Record<string, unknown>;
+  const persona = view.persona as Record<string, unknown> | undefined;
+  if (!persona || persona.authority !== "none" || typeof persona.name !== "string" || typeof persona.preamble !== "string" || !Array.isArray(persona.tone) || !Array.isArray(persona.expressions)) return false;
+  if (!view.limits || typeof view.limits !== "object") return false;
+  if (!Array.isArray(view.messages)) return false;
+  return view.messages.every((message) => {
+    if (!message || typeof message !== "object") return false;
+    const m = message as Record<string, unknown>;
+    if (typeof m.id !== "string" || typeof m.content !== "string" || typeof m.createdAtUnixMs !== "number") return false;
+    if (m.role !== "owner" && m.role !== "saiki" && m.role !== "tool_result") return false;
+    return m.expression === undefined || EXPRESSIONS.includes(m.expression as Expression);
+  });
+}
+
+export function isExpressionEvent(value: unknown): value is ExpressionEvent {
+  if (!value || typeof value !== "object") return false;
+  return EXPRESSIONS.includes((value as Record<string, unknown>).expression as Expression);
+}
+
+export function isCloudStatus(value: unknown): value is CloudStatus {
+  if (!value || typeof value !== "object") return false;
+  const status = value as Record<string, unknown>;
+  if (typeof status.enabled !== "boolean" || typeof status.model !== "string" || typeof status.credentialPresent !== "boolean" || status.credentialStore !== "windows_credential_manager" || status.endpoint !== "https://api.openai.com/v1/responses") return false;
+  if (!status.disclosure || typeof status.disclosure !== "object") return false;
+  const disclosure = status.disclosure as Record<string, unknown>;
+  return typeof disclosure.destination === "string" && Array.isArray(disclosure.data) && disclosure.data.length === 2 && disclosure.storageRequested === false && typeof disclosure.billing === "string";
+}
+
+export function isCloudStreamEvent(value: unknown): value is CloudStreamEvent {
+  if (!value || typeof value !== "object") return false;
+  const event = value as Record<string, unknown>;
+  if (typeof event.request_id !== "string") return false;
+  if (event.kind === "chunk") return typeof event.content === "string";
+  if (event.kind === "finished") return event.outcome === "succeeded" || event.outcome === "cancelled";
+  return event.kind === "failed" && (event.outcome === "failed" || event.outcome === "unavailable") && typeof event.message === "string";
 }
 
 export function isOllamaModelList(value: unknown): value is readonly OllamaModel[] {

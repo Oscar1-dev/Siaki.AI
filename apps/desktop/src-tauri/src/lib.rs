@@ -1,6 +1,9 @@
+mod cloud;
+mod conversation;
 mod logging;
 mod ollama;
 mod overlay;
+mod persona;
 mod workspace;
 
 use serde::{Deserialize, Serialize};
@@ -157,6 +160,9 @@ pub fn run() {
         .manage(ollama::OllamaState::new())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
+            let config_dir = app.path().app_config_dir().map_err(|error| format!("resolve config directory: {error}"))?;
+            app.manage(cloud::CloudState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(conversation::ConversationState::load(&config_dir).map_err(std::io::Error::other)?);
             let log_dir = app.path().app_log_dir().map_err(|error| format!("resolve log directory: {error}"))?;
             logging::init(&log_dir).map_err(|error| format!("initialize logging: {error}"))?;
             *app.state::<ShellState>().lifecycle.lock().map_err(|_| "initialize shell lifecycle")? = ShellLifecycle::Ready;
@@ -206,6 +212,18 @@ pub fn run() {
             ollama::discover_ollama_models,
             ollama::start_ollama_chat,
             ollama::cancel_ollama_chat
+            ,cloud::get_cloud_status,
+            cloud::import_openai_key_from_environment,
+            cloud::delete_openai_key,
+            cloud::configure_cloud_provider,
+            cloud::start_cloud_chat,
+            cloud::cancel_cloud_chat
+            ,conversation::get_conversation,
+            conversation::append_owner_message,
+            conversation::append_saiki_message,
+            conversation::record_tool_result,
+            conversation::clear_conversation,
+            conversation::compose_conversation_context
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");
