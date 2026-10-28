@@ -1,9 +1,36 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { IPC_COMMANDS, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
+import { IPC_COMMANDS, isCloudStatus, isCloudStreamEvent, isConversationView, isExpressionEvent, isMemoryClaim, isMemoryExport, isOllamaModelList, isOllamaStreamEvent, isOverlayStatus, isShellStatus, isWorkspaceState, validateFrontendLog } from "../src/index.ts";
 
 test("command names are stable and explicit", () => {
-  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat"]);
+  assert.deepEqual(Object.values(IPC_COMMANDS), ["get_shell_status", "write_frontend_log", "request_app_exit", "get_overlay_status", "move_overlay_to_monitor", "set_overlay_paused", "get_workspace_state", "set_workspace_mode", "set_ui_preferences", "discover_ollama_models", "start_ollama_chat", "cancel_ollama_chat", "get_cloud_status", "import_openai_key_from_environment", "delete_openai_key", "configure_cloud_provider", "start_cloud_chat", "cancel_cloud_chat", "get_conversation", "append_owner_message", "append_saiki_message", "record_tool_result", "clear_conversation", "compose_conversation_context", "teach_memory", "correct_memory", "forget_memory", "search_memory", "list_memory", "export_memory"]);
+});
+
+test("memory contracts validate claims, provenance, and export shape", () => {
+  const claim = { id: "m1", claim: "ships monday", source: "owner", confidence: 0.9, sensitivity: "private", status: "active", supersedes: null, createdAtUnixMs: 1, updatedAtUnixMs: 2 };
+  assert.equal(isMemoryClaim(claim), true);
+  assert.equal(isMemoryClaim({ ...claim, sensitivity: "classified" }), false);
+  assert.equal(isMemoryClaim({ ...claim, status: "approved" }), false);
+  assert.equal(isMemoryClaim({ ...claim, supersedes: "m0" }), true);
+  assert.equal(isMemoryExport({ schemaVersion: 1, claims: [claim], events: [] }), true);
+  assert.equal(isMemoryExport({ schemaVersion: 1, claims: [{ ...claim, confidence: "high" }], events: [] }), false);
+});
+
+test("conversation contracts carry a non-authoritative persona and typed messages", () => {
+  const view = { persona: { name: "Saiki", authority: "none", tone: ["dry"], preamble: "tone only", expressions: ["neutral", "talking"] }, messages: [{ id: "1", role: "tool_result", content: "exit code 1", createdAtUnixMs: 1 }, { id: "2", role: "saiki", content: "Reported.", createdAtUnixMs: 2, expression: "talking" }], limits: { maxStoredMessages: 200, maxContextMessages: 24, maxContextBytes: 24576, maxContentBytes: 32768 } };
+  assert.equal(isConversationView(view), true);
+  assert.equal(isConversationView({ ...view, persona: { ...view.persona, authority: "owner" } }), false);
+  assert.equal(isConversationView({ ...view, messages: [{ id: "3", role: "approved", content: "x", createdAtUnixMs: 3 }] }), false);
+  assert.equal(isExpressionEvent({ expression: "annoyed" }), true);
+  assert.equal(isExpressionEvent({ expression: "authorized" }), false);
+});
+
+test("cloud contracts require disclosure and explicit outcomes", () => {
+  const status = { enabled: false, model: "", credentialPresent: false, credentialStore: "windows_credential_manager", endpoint: "https://api.openai.com/v1/responses", disclosure: { destination: "OpenAI API", data: ["message", "model"], storageRequested: false, billing: "API billing applies" } };
+  assert.equal(isCloudStatus(status), true);
+  assert.equal(isCloudStatus({ ...status, credentialStore: "renderer_local_storage" }), false);
+  assert.equal(isCloudStreamEvent({ kind: "finished", request_id: "id", outcome: "succeeded" }), true);
+  assert.equal(isCloudStreamEvent({ kind: "finished", request_id: "id", outcome: "authorized" }), false);
 });
 
 test("Ollama contracts reject malformed discovery and trusted tool results", () => {

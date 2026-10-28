@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { OLLAMA_STREAM_EVENT, isOllamaStreamEvent, type OllamaModel, type OllamaStreamEvent } from "@saiki/ipc-contracts";
 import { cancelOllamaChat, discoverOllamaModels, startOllamaChat } from "./ipc";
 import "./models.css";
+import { CloudProvider } from "./CloudProvider";
 
 type Status = "idle" | "discovering" | "streaming" | "succeeded" | "cancelled" | "unavailable" | "failed";
 export function ModelView() {
@@ -26,5 +27,7 @@ export function ModelView() {
     <div className="model-actions"><button onClick={send} disabled={!model || !prompt.trim() || status === "streaming"}>Send locally</button><button className="quiet-button" onClick={cancel} disabled={status !== "streaming" || !requestId}>Cancel</button></div>
     {(answer || status === "streaming") && <section className="model-response" aria-live="polite"><h2>Response</h2><pre>{answer || "Waiting for the first token…"}</pre></section>}
     {proposals.length > 0 && <section className="proposal-list"><h2>Untrusted tool proposals</h2>{proposals.map((proposal, index) => <article key={`${proposal.name}-${index}`}><b>{proposal.name}</b><code>{JSON.stringify(proposal.arguments)}</code><span>NOT EXECUTED</span></article>)}</section>}
-    <p className="scope-note">Requests stay on 127.0.0.1. Model tool calls are displayed as untrusted proposals and cannot authorize or execute an action.</p></div>;
+    <p className="scope-note">Requests stay on 127.0.0.1. Model tool calls are displayed as untrusted proposals and cannot authorize or execute an action.</p>
+    <CloudProvider />
+  </div>;
 }

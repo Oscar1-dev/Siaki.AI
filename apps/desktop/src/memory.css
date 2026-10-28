@@ -1,0 +1,22 @@
+.memory{gap:16px}
+.memory .memory-search{display:flex;gap:8px}
+.memory .memory-search input{flex:1;box-sizing:border-box;border:1px solid #30465c;background:#09121d;color:#e5f2ff;padding:10px 12px;font:inherit}
+.memory .memory-list{display:grid;gap:10px;max-height:38vh;overflow-y:auto;padding:2px}
+.memory .empty-note{color:#7f94a8;margin:0}
+.memory .claim{display:grid;gap:8px;padding:12px 14px;border:1px solid #26384a;background:#0b1622}
+.memory .claim-text{margin:0;color:#dbe8f5;white-space:pre-wrap;word-break:break-word}
+.memory .claim-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:#8aa0b4}
+.memory .claim-meta .sensitivity{padding:1px 7px;border:1px solid #30465c;border-radius:999px;text-transform:uppercase;letter-spacing:.05em}
+.memory .sensitivity-sensitive{color:#e0a3a3;border-color:#6e3b3b}
+.memory .sensitivity-private{color:#d8c48a;border-color:#6e5d32}
+.memory .sensitivity-public{color:#8fd0b4;border-color:#36624f}
+.memory .supersedes{color:#9a8ad0}
+.memory .claim-actions{display:flex;gap:8px}
+.memory .claim-actions button{padding:5px 10px;border:1px solid #30465c;background:#111b27;color:#e5f2ff;font-size:12px}
+.memory .danger-button{border-color:#6e3b3b!important;color:#e0a3a3!important}
+.memory .teach-form{display:grid;gap:12px;padding:14px;border:1px solid #26384a}
+.memory .teach-form h2{margin:0;font-size:16px;font-weight:500}
+.memory .teach-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.memory textarea,.memory input[type=text],.memory .teach-form input,.memory select{width:100%;box-sizing:border-box;border:1px solid #30465c;background:#09121d;color:#e5f2ff;padding:10px;font:inherit}
+.memory input[type=range]{padding:0}
+@media (max-width:720px){.memory .teach-row{grid-template-columns:1fr}}
