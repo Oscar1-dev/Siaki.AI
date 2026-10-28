@@ -12,6 +12,10 @@ export const PLACEHOLDER_RIG_MANIFEST = {
   ],
   motions: [
     { id: "idle", durationMs: 2400, loop: true },
-    { id: "focus", durationMs: 1200, loop: true },
+    { id: "gaze", durationMs: 900, loop: false },
+    { id: "blink", durationMs: 180, loop: false },
+    { id: "walk", durationMs: 1600, loop: false },
+    { id: "sit", durationMs: 1200, loop: true },
+    { id: "teleport", durationMs: 720, loop: false },
   ],
 } as const satisfies RigManifest;

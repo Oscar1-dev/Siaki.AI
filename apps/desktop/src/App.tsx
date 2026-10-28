@@ -8,7 +8,7 @@ import "./styles.css";
 type ViewState = { kind: "loading" } | { kind: "ready"; shell: ShellStatus; overlay: OverlayStatus } | { kind: "error"; message: string };
 
 function OverlaySurface() {
-  return <main className="overlay-surface" aria-hidden="true"><RigSurface /><div className="rig-label"><span>SAIKI</span><small>PIXEL RIG ADAPTER</small></div></main>;
+  return <main className="overlay-surface" aria-hidden="true"><RigSurface /></main>;
 }
 
 function Controller() {

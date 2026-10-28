@@ -39,3 +39,4 @@ Every handoff reports files changed, commands and results, manual checks, securi
 - Phase 01: npm/Rust workspace, Tauri 2 Windows shell, React/Vite renderer, typed shell IPC, bounded native logging, renderer error boundary, locked tests/builds, and Windows CI. Later capabilities remain unavailable.
 - Phase 02: transparent monitor-sized click-through overlay, separate controller hit region, physical monitor/DPI inventory, monitor switching, and global owner pause/resume hotkey. Character assets and animation remain unavailable.
 - Phase 03: versioned layered rig manifest, runtime-neutral adapter contract, licensed-runtime evaluation, and animated procedural PixiJS rig spike. Final artwork and proprietary runtime selection remain unavailable.
+- Phase 04: interruptible renderer-neutral state machine for gaze, blink, walk, sit, and teleport; procedural Pixi pose application, fixed GPU psychic effects, and bounded frame telemetry. Final artwork remains unavailable.
