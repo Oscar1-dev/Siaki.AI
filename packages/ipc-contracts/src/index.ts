@@ -93,6 +93,7 @@ export const IPC_COMMANDS = {
   createAccountWorkflow:"create_account_workflow",
   confirmAccountWorkflowStep:"confirm_account_workflow_step",
   cancelAccountWorkflow:"cancel_account_workflow",
+  getExperiments:"get_experiments",createExperiment:"create_experiment",addExperimentNote:"add_experiment_note",addExperimentKpi:"add_experiment_kpi",recordKpiObservation:"record_kpi_observation",evaluateExperiment:"evaluate_experiment",advanceExperiment:"advance_experiment",stopExperiment:"stop_experiment",
 } as const;
 export const REMINDER_EVENT = "saiki://reminder" as const;
 export const WORLD_EVENT = "saiki://world-event" as const;
@@ -387,6 +388,13 @@ export interface AccountWorkflowStep{readonly id:string;readonly workflowId:stri
 export interface AccountWorkflow{readonly id:string;readonly identityId:string;readonly provider:string;readonly kind:AccountWorkflowKind;readonly status:"active"|"completed"|"cancelled";readonly createdAtUnixMs:number;readonly updatedAtUnixMs:number;readonly steps:readonly AccountWorkflowStep[]}
 export interface WorkflowAuditEvent{readonly id:string;readonly workflowId:string;readonly eventType:string;readonly stepKey:string|null;readonly actor:"owner";readonly occurredAtUnixMs:number}
 export interface WorkflowSnapshot{readonly workflows:readonly AccountWorkflow[];readonly audit:readonly WorkflowAuditEvent[];readonly automation:"manual_owner_confirmed_only";readonly secretInputSupported:false}
+export type ExperimentStage="intake"|"research"|"validation"|"pilot"|"completed"|"stopped";export type KpiKind="revenue_minor"|"conversion_rate"|"count"|"duration_ms"|"custom";export type EvidenceSource="owner_measurement"|"provider_report"|"verified_tool_result";
+export interface ResearchNote{readonly id:string;readonly experimentId:string;readonly content:string;readonly sourceUrl:string|null;readonly trust:"owner"|"untrusted_web_content"|"verified_source";readonly createdAtUnixMs:number}
+export interface KpiObservation{readonly id:string;readonly kpiId:string;readonly value:number;readonly source:EvidenceSource;readonly evidenceReference:string;readonly observedAtUnixMs:number}
+export interface KpiDefinition{readonly id:string;readonly experimentId:string;readonly name:string;readonly kind:KpiKind;readonly direction:"at_least"|"at_most";readonly target:number;readonly unit:string;readonly observations:readonly KpiObservation[]}
+export interface ExperimentEvaluation{readonly id:string;readonly experimentId:string;readonly stage:ExperimentStage;readonly recommendation:"insufficient_evidence"|"hold"|"advance";readonly reason:string;readonly evidenceCount:number;readonly observedRevenueMinor:number|null;readonly revenueEvidence:"none"|EvidenceSource;readonly createdAtUnixMs:number}
+export interface BusinessExperiment{readonly id:string;readonly idea:string;readonly hypothesis:string;readonly stage:ExperimentStage;readonly budgetCurrency:"GBP"|"USD"|"EUR";readonly budgetLimitMinor:number;readonly actualSpendMinor:null;readonly spendTracking:"unavailable";readonly createdAtUnixMs:number;readonly updatedAtUnixMs:number;readonly notes:readonly ResearchNote[];readonly kpis:readonly KpiDefinition[];readonly evaluations:readonly ExperimentEvaluation[]}
+export interface ExperimentSnapshot{readonly experiments:readonly BusinessExperiment[];readonly financialExecution:"unavailable";readonly revenuePolicy:"observed_evidence_only_never_inferred"}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -543,7 +551,15 @@ export interface CommandMap {
   readonly create_account_workflow:{readonly args:{readonly request:{readonly identityId:string;readonly kind:AccountWorkflowKind}};readonly result:AccountWorkflow};
   readonly confirm_account_workflow_step:{readonly args:{readonly request:{readonly workflowId:string;readonly stepId:string;readonly ownerConfirmed:true}};readonly result:AccountWorkflow};
   readonly cancel_account_workflow:{readonly args:{readonly id:string};readonly result:boolean};
+  readonly get_experiments:{readonly args:undefined;readonly result:ExperimentSnapshot};
+  readonly create_experiment:{readonly args:{readonly request:{readonly idea:string;readonly hypothesis:string;readonly budgetCurrency:"GBP"|"USD"|"EUR";readonly budgetLimitMinor:number}};readonly result:BusinessExperiment};
+  readonly add_experiment_note:{readonly args:{readonly request:{readonly experimentId:string;readonly content:string;readonly sourceUrl?:string;readonly trust:"owner"|"untrusted_web_content"|"verified_source"}};readonly result:ResearchNote};
+  readonly add_experiment_kpi:{readonly args:{readonly request:{readonly experimentId:string;readonly name:string;readonly kind:KpiKind;readonly direction:"at_least"|"at_most";readonly target:number;readonly unit:string}};readonly result:KpiDefinition};
+  readonly record_kpi_observation:{readonly args:{readonly request:{readonly kpiId:string;readonly value:number;readonly source:EvidenceSource;readonly evidenceReference:string;readonly observedAtUnixMs:number}};readonly result:KpiObservation};
+  readonly evaluate_experiment:{readonly args:{readonly id:string};readonly result:ExperimentEvaluation};readonly advance_experiment:{readonly args:{readonly id:string};readonly result:BusinessExperiment};readonly stop_experiment:{readonly args:{readonly id:string};readonly result:boolean};
 }
+
+export function isExperimentSnapshot(value:unknown):value is ExperimentSnapshot{if(!value||typeof value!=="object")return false;const e=value as Record<string,unknown>;return Array.isArray(e.experiments)&&e.financialExecution==="unavailable"&&e.revenuePolicy==="observed_evidence_only_never_inferred"&&e.experiments.every(x=>Boolean(x)&&typeof x==="object"&&(x as Record<string,unknown>).actualSpendMinor===null&&(x as Record<string,unknown>).spendTracking==="unavailable");}
 
 export function isWorkflowSnapshot(value:unknown):value is WorkflowSnapshot{if(!value||typeof value!=="object")return false;const w=value as Record<string,unknown>;return Array.isArray(w.workflows)&&Array.isArray(w.audit)&&w.automation==="manual_owner_confirmed_only"&&w.secretInputSupported===false&&w.workflows.every(item=>Boolean(item)&&typeof item==="object"&&Array.isArray((item as Record<string,unknown>).steps)&&((item as Record<string,unknown>).steps as unknown[]).every(step=>Boolean(step)&&typeof step==="object"&&(step as Record<string,unknown>).automated===false&&(step as Record<string,unknown>).requiresOwnerConfirmation===true));}
 

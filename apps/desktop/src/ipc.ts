@@ -36,6 +36,7 @@ import {
   isPlanningSnapshot,
   isIdentityRegistryStatus,
   isWorkflowSnapshot,
+  isExperimentSnapshot,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -109,6 +110,7 @@ import {
   type AccountWorkflow,
   type AccountWorkflowKind,
   type WorkflowSnapshot,
+  type BusinessExperiment,type ExperimentEvaluation,type ExperimentSnapshot,type KpiDefinition,type KpiObservation,type ResearchNote,type KpiKind,type EvidenceSource,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -232,6 +234,12 @@ export async function getAccountWorkflows():Promise<WorkflowSnapshot>{const valu
 export async function createAccountWorkflow(identityId:string,kind:AccountWorkflowKind):Promise<AccountWorkflow>{return invokeTyped(IPC_COMMANDS.createAccountWorkflow,{request:{identityId,kind}});}
 export async function confirmAccountWorkflowStep(workflowId:string,stepId:string):Promise<AccountWorkflow>{return invokeTyped(IPC_COMMANDS.confirmAccountWorkflowStep,{request:{workflowId,stepId,ownerConfirmed:true}});}
 export async function cancelAccountWorkflow(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.cancelAccountWorkflow,{id});}
+export async function getExperiments():Promise<ExperimentSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getExperiments);if(!isExperimentSnapshot(value))throw new Error("Native core returned invalid experiments.");return value;}
+export async function createExperiment(request:{idea:string;hypothesis:string;budgetCurrency:"GBP"|"USD"|"EUR";budgetLimitMinor:number}):Promise<BusinessExperiment>{return invokeTyped(IPC_COMMANDS.createExperiment,{request});}
+export async function addExperimentNote(request:{experimentId:string;content:string;sourceUrl?:string;trust:"owner"|"untrusted_web_content"|"verified_source"}):Promise<ResearchNote>{return invokeTyped(IPC_COMMANDS.addExperimentNote,{request});}
+export async function addExperimentKpi(request:{experimentId:string;name:string;kind:KpiKind;direction:"at_least"|"at_most";target:number;unit:string}):Promise<KpiDefinition>{return invokeTyped(IPC_COMMANDS.addExperimentKpi,{request});}
+export async function recordKpiObservation(request:{kpiId:string;value:number;source:EvidenceSource;evidenceReference:string;observedAtUnixMs:number}):Promise<KpiObservation>{return invokeTyped(IPC_COMMANDS.recordKpiObservation,{request});}
+export async function evaluateExperiment(id:string):Promise<ExperimentEvaluation>{return invokeTyped(IPC_COMMANDS.evaluateExperiment,{id});}export async function advanceExperiment(id:string):Promise<BusinessExperiment>{return invokeTyped(IPC_COMMANDS.advanceExperiment,{id});}export async function stopExperiment(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.stopExperiment,{id});}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

@@ -2,6 +2,7 @@ mod browser;
 mod cloud;
 mod conversation;
 mod devtools;
+mod experiment;
 mod identity;
 mod knowledge;
 mod logging;
@@ -189,6 +190,7 @@ pub fn run() {
             app.manage(planning::PlanningState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(identity::IdentityState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(onboarding::OnboardingState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(experiment::ExperimentState::load(&config_dir).map_err(std::io::Error::other)?);
             let planning_handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 let planning_state = planning_handle.state::<planning::PlanningState>();
@@ -350,6 +352,14 @@ pub fn run() {
             onboarding::create_account_workflow,
             onboarding::confirm_account_workflow_step,
             onboarding::cancel_account_workflow
+            ,experiment::get_experiments,
+            experiment::create_experiment,
+            experiment::add_experiment_note,
+            experiment::add_experiment_kpi,
+            experiment::record_kpi_observation,
+            experiment::evaluate_experiment,
+            experiment::advance_experiment,
+            experiment::stop_experiment
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

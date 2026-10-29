@@ -79,6 +79,17 @@ test("identity registry has no secret input and reports provisioning unavailable
 
 test("onboarding view exposes manual checklist without automation",async()=>{const previous=invoke.getMockImplementation();const identity={id:"i",provider:"GitHub",accountLabel:"owner",loginHint:"owner",ownerProofMethod:"owner_attestation",ownerVerifiedAtUnixMs:1,vaultReference:"wincred:x",vaultBinding:"reference_only",credentialPresent:false,credentialReason:"unavailable",mfaEnabled:false,mfaMethods:[],recoveryControlConfirmed:true,status:"active",createdAtUnixMs:1,updatedAtUnixMs:1};invoke.mockImplementation((command:string,args?:unknown)=>command==="get_account_workflows"?Promise.resolve({workflows:[],audit:[],automation:"manual_owner_confirmed_only",secretInputSupported:false}):command==="get_identity_registry"?Promise.resolve({identities:[identity],secretInputSupported:false,vaultBackend:"windows_credential_manager_reference",credentialProvisioning:"unavailable"}):previous?.(command,args));render(<App/>);fireEvent.click(await screen.findByRole("button",{name:"Open workspace"}));fireEvent.click(await screen.findByRole("button",{name:"onboarding"}));expect(await screen.findByText("manual_owner_confirmed_only")).toBeInTheDocument();expect(screen.getByText(/No provider automation or credential input/)).toBeInTheDocument();expect(screen.getByRole("button",{name:"Create manual checklist"})).toBeEnabled();});
 
+test("experiment view labels finances unavailable and never fabricates revenue", async () => {
+  const previous = invoke.getMockImplementation();
+  invoke.mockImplementation((command: string, args?: unknown) => command === "get_experiments" ? Promise.resolve({ experiments: [{ id: "e", idea: "Measured trial", hypothesis: "A causes B", stage: "validation", budgetCurrency: "GBP", budgetLimitMinor: 5000, actualSpendMinor: null, spendTracking: "unavailable", createdAtUnixMs: 1, updatedAtUnixMs: 1, notes: [], kpis: [], evaluations: [] }], financialExecution: "unavailable", revenuePolicy: "observed_evidence_only_never_inferred" }) : previous?.(command, args));
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+  fireEvent.click(await screen.findByRole("button", { name: "experiments" }));
+  expect(await screen.findByText(/Revenue is never inferred/i)).toBeInTheDocument();
+  expect(screen.getByText(/Financial execution: unavailable/i)).toBeInTheDocument();
+  expect(screen.getByText(/actual spend unknown\/unavailable/i)).toBeInTheDocument();
+});
+
 test("system view confines file tools and launches only allowlisted apps", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
