@@ -1,108 +1,37 @@
 import { useEffect, useRef, useState } from "react";
 import "pixi.js/unsafe-eval";
-import { Application } from "pixi.js";
-import { FrameBudgetTracker, PlaceholderPixiRig, validateRigManifest } from "@saiki/character-rig";
-import type { AnimationRequest, CharacterAnimationState, FrameBudgetSnapshot } from "@saiki/character-rig";
+import { Application, Container } from "pixi.js";
+import { loadLayeredRigV2 } from "@saiki/character-rig";
+import type { LayeredRigLoadResult, PresentationMode } from "@saiki/character-rig";
 import { getWorkspaceState, writeFrontendLog } from "../ipc";
-import { PLACEHOLDER_RIG_MANIFEST } from "./placeholder-manifest";
+import { CHARACTER_DEBUG_STORAGE_KEY, CHARACTER_MANIFEST_URL } from "./asset-foundation";
 
-type Status = { kind: "loading" } | { kind: "ready" } | { kind: "unavailable"; message: string };
-type Telemetry = { state: CharacterAnimationState; budget: FrameBudgetSnapshot };
-type Preferences = { reducedMotion: boolean; speechBubbles: boolean };
-
-const DEMO_SEQUENCE: readonly AnimationRequest[] = [
-  { state: "idle" },
-  { state: "gaze", gaze: { x: 1, y: -0.5 } },
-  { state: "blink" },
-  { state: "walk", direction: 1 },
-  { state: "sit" },
-  { state: "teleport" },
-];
-
+type Status = { kind: "loading" } | { kind: "ready"; layers: number; mode: PresentationMode } | { kind: "unavailable"; message: string };
 export function RigSurface() {
-  const host = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<Status>({ kind: "loading" });
-  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
-  const [preferences, setPreferences] = useState<Preferences>({ reducedMotion: false, speechBubbles: true });
-
+  const host = useRef<HTMLDivElement>(null); const [status, setStatus] = useState<Status>({ kind: "loading" });
   useEffect(() => {
-    const element = host.current;
-    if (!element) return;
-    let cancelled = false;
-    const app = new Application();
-    const rig = new PlaceholderPixiRig();
-    const budget = new FrameBudgetTracker();
-    let observer: ResizeObserver | undefined;
-    let preferenceTimer: ReturnType<typeof setInterval> | undefined;
-    let currentPreferences: Preferences = { reducedMotion: false, speechBubbles: true };
-    let frameCount = 0;
-    let sequenceIndex = 0;
-    let sequenceElapsedMs = 0;
-    let loggedBudget = false;
-
+    const element = host.current; if (!element) return;
+    let cancelled = false; let rig: LayeredRigLoadResult | undefined; let timer: ReturnType<typeof setInterval> | undefined; let observer: ResizeObserver | undefined;
+    const app = new Application(); const viewport = new Container({ label: "character-viewport" });
     void (async () => {
       try {
         await app.init({ backgroundAlpha: 0, antialias: true, resizeTo: element, preference: "webgl" });
         if (cancelled) { app.destroy(true); return; }
-        const manifest = validateRigManifest(PLACEHOLDER_RIG_MANIFEST);
-        await rig.load(manifest);
-        element.append(app.canvas);
-        app.stage.addChild(rig.view);
-        rig.resize(element.clientWidth, element.clientHeight);
-        rig.transition(DEMO_SEQUENCE[0]!);
-        const refreshPreferences = async () => {
-          const workspace = await getWorkspaceState();
-          currentPreferences = { reducedMotion: workspace.reducedMotion, speechBubbles: workspace.speechBubbles };
-          if (!cancelled) setPreferences(currentPreferences);
-        };
-        await refreshPreferences();
-        preferenceTimer = setInterval(() => { void refreshPreferences().catch(() => undefined); }, 750);
-        app.ticker.add((ticker) => {
-          sequenceElapsedMs += ticker.deltaMS;
-          if (currentPreferences.reducedMotion && rig.snapshot().state !== "idle") {
-            sequenceElapsedMs = 0;
-            sequenceIndex = 0;
-            rig.transition({ state: "idle" });
-          } else if (!currentPreferences.reducedMotion && sequenceElapsedMs >= 1_800) {
-            sequenceElapsedMs = 0;
-            sequenceIndex = (sequenceIndex + 1) % DEMO_SEQUENCE.length;
-            rig.transition(DEMO_SEQUENCE[sequenceIndex]!);
-          }
-          const started = performance.now();
-          const pose = rig.update(ticker.deltaMS);
-          budget.record(performance.now() - started, ticker.deltaMS);
-          frameCount += 1;
-          if (frameCount % 120 === 0 && !cancelled) {
-            const snapshot = budget.snapshot();
-            setTelemetry({ state: pose.state, budget: snapshot });
-            if (!loggedBudget && snapshot.sampleCount >= 240) {
-              loggedBudget = true;
-              void writeFrontendLog({ level: "info", event: "rig.frame_budget", message: `samples=${snapshot.sampleCount} update_p95_ms=${snapshot.updateP95Ms.toFixed(3)} frame_p95_ms=${snapshot.frameP95Ms.toFixed(3)} overruns=${snapshot.framesOverBudget}` });
-            }
-          }
-        });
-        observer = new ResizeObserver(() => rig.resize(element.clientWidth, element.clientHeight));
-        observer.observe(element);
-        setStatus({ kind: "ready" });
-      } catch (error) {
-        if (!cancelled) setStatus({ kind: "unavailable", message: error instanceof Error ? error.message : String(error) });
-      }
+        element.append(app.canvas); app.stage.addChild(viewport);
+        const response = await fetch(CHARACTER_MANIFEST_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Production character artwork unavailable (${response.status}). Supply /character/saiki-kusuo/rig.v2.json and its licensed layers.`);
+        rig = await loadLayeredRigV2(await response.json() as unknown, new URL(CHARACTER_MANIFEST_URL, window.location.href).toString()); viewport.addChild(rig.root);
+        const resize = () => viewport.position.set(element.clientWidth / 2, element.clientHeight / 2); resize(); observer = new ResizeObserver(resize); observer.observe(element);
+        const refresh = async () => { if (!rig) return; const workspace = await getWorkspaceState(); const mode: PresentationMode = workspace.mode === "full" ? "full_body" : "floating"; rig.setMode(mode); rig.debug.setEnabled(localStorage.getItem(CHARACTER_DEBUG_STORAGE_KEY) === "true"); if (!cancelled) setStatus({ kind: "ready", layers: rig.layers.size, mode }); };
+        await refresh(); timer = setInterval(() => { void refresh().catch(() => undefined); }, 750);
+        void writeFrontendLog({ level: "info", event: "rig.asset_package_loaded", message: `layers=${rig.layers.size} runtime=pixi-layered-v2` });
+      } catch (error) { const reason = error instanceof Error ? error.message : String(error); const message = reason === "Failed to fetch" ? "Production character artwork is not installed. Supply the documented licensed layer package." : reason; if (!cancelled) setStatus({ kind: "unavailable", message }); void writeFrontendLog({ level: "warn", event: "rig.asset_package_unavailable", message: message.slice(0, 500) }); }
     })();
-
-    return () => {
-      cancelled = true;
-      observer?.disconnect();
-      if (preferenceTimer) clearInterval(preferenceTimer);
-      if (app.renderer) {
-        rig.destroy();
-        app.destroy(true);
-      }
-    };
+    return () => { cancelled = true; if (timer) clearInterval(timer); observer?.disconnect(); rig?.destroy(); if (app.renderer) app.destroy(true); };
   }, []);
-
   return <div ref={host} className="rig-surface" data-rig-status={status.kind} aria-hidden="true">
-    {status.kind === "unavailable" && <span>RIG UNAVAILABLE<br />{status.message}</span>}
-    {status.kind === "ready" && <div className="rig-telemetry"><b>{telemetry?.state ?? "idle"}</b><small>{telemetry ? `UPDATE P95 ${telemetry.budget.updateP95Ms.toFixed(2)}MS · FRAME P95 ${telemetry.budget.frameP95Ms.toFixed(2)}MS` : "MEASURING FRAME BUDGET"}</small></div>}
-    {status.kind === "ready" && preferences.speechBubbles && <div className="speech-bubble">Current state: {telemetry?.state ?? "idle"}</div>}
+    {status.kind === "loading" && <span>CHECKING LAYERED CHARACTER ASSETS</span>}
+    {status.kind === "unavailable" && <span>CHARACTER ARTWORK UNAVAILABLE<br />{status.message}<br />No placeholder substituted.</span>}
+    {status.kind === "ready" && <div className="rig-telemetry"><b>LAYERED RIG READY</b><small>{status.layers} validated layers · {status.mode}</small></div>}
   </div>;
 }
