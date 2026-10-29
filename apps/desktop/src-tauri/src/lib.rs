@@ -2,6 +2,7 @@ mod browser;
 mod cloud;
 mod conversation;
 mod devtools;
+mod identity;
 mod knowledge;
 mod logging;
 mod memory;
@@ -185,6 +186,7 @@ pub fn run() {
             app.manage(world::WorldState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(supervisor::SupervisorState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(planning::PlanningState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(identity::IdentityState::load(&config_dir).map_err(std::io::Error::other)?);
             let planning_handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 let planning_state = planning_handle.state::<planning::PlanningState>();
@@ -338,6 +340,10 @@ pub fn run() {
             ,planning::get_planning_snapshot,
             planning::create_planned_goal,
             planning::stop_planned_goal
+            ,identity::get_identity_registry,
+            identity::register_identity,
+            identity::update_identity_mfa,
+            identity::archive_identity
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

@@ -34,6 +34,7 @@ import {
   isWorldSnapshot,
   isSupervisorSnapshot,
   isPlanningSnapshot,
+  isIdentityRegistryStatus,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -100,6 +101,10 @@ import {
   type PlanningSnapshot,
   type PlannedGoal,
   type CreatePlannedGoalRequest,
+  type IdentityRecord,
+  type IdentityRegistryStatus,
+  type RegisterIdentityRequest,
+  type UpdateMfaRequest,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -215,6 +220,10 @@ export async function setSupervisorPaused(paused:boolean):Promise<SupervisorSnap
 export async function getPlanningSnapshot():Promise<PlanningSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getPlanningSnapshot);if(!isPlanningSnapshot(value))throw new Error("Native core returned an invalid planning snapshot.");return value;}
 export async function createPlannedGoal(request:CreatePlannedGoalRequest):Promise<PlannedGoal>{return invokeTyped(IPC_COMMANDS.createPlannedGoal,{request});}
 export async function stopPlannedGoal(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.stopPlannedGoal,{id});}
+export async function getIdentityRegistry():Promise<IdentityRegistryStatus>{const value:unknown=await invokeTyped(IPC_COMMANDS.getIdentityRegistry);if(!isIdentityRegistryStatus(value))throw new Error("Native core returned an invalid identity registry.");return value;}
+export async function registerIdentity(request:RegisterIdentityRequest):Promise<IdentityRecord>{return invokeTyped(IPC_COMMANDS.registerIdentity,{request});}
+export async function updateIdentityMfa(request:UpdateMfaRequest):Promise<IdentityRecord>{return invokeTyped(IPC_COMMANDS.updateIdentityMfa,{request});}
+export async function archiveIdentity(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.archiveIdentity,{id});}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);

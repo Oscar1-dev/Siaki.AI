@@ -85,6 +85,10 @@ export const IPC_COMMANDS = {
   getPlanningSnapshot:"get_planning_snapshot",
   createPlannedGoal:"create_planned_goal",
   stopPlannedGoal:"stop_planned_goal",
+  getIdentityRegistry:"get_identity_registry",
+  registerIdentity:"register_identity",
+  updateIdentityMfa:"update_identity_mfa",
+  archiveIdentity:"archive_identity",
 } as const;
 export const REMINDER_EVENT = "saiki://reminder" as const;
 export const WORLD_EVENT = "saiki://world-event" as const;
@@ -369,6 +373,11 @@ export interface PlannedTask{readonly id:string;readonly planId:string;readonly 
 export interface EvidenceReview{readonly id:string;readonly goalId:string;readonly planVersion:number;readonly taskId:string;readonly verdict:"stop_success"|"pivot"|"stop_blocked";readonly reason:string;readonly evidenceDigest:string;readonly createdAtUnixMs:number}
 export interface PlanningSnapshot{readonly goals:readonly PlannedGoal[];readonly plans:readonly Plan[];readonly tasks:readonly PlannedTask[];readonly reviews:readonly EvidenceReview[];readonly capability:"internal_world_review_only"}
 export interface CreatePlannedGoalRequest{readonly objective:string;readonly successCriterion:string}
+export type OwnerProofMethod="owner_attestation"|"provider_session"|"recovery_control";export type MfaMethod="authenticator"|"security_key"|"provider_managed"|"sms";
+export interface IdentityRecord{readonly id:string;readonly provider:string;readonly accountLabel:string;readonly loginHint:string;readonly ownerProofMethod:OwnerProofMethod;readonly ownerVerifiedAtUnixMs:number;readonly vaultReference:string;readonly vaultBinding:"reference_only";readonly credentialPresent:false;readonly credentialReason:string;readonly mfaEnabled:boolean;readonly mfaMethods:readonly MfaMethod[];readonly recoveryControlConfirmed:boolean;readonly status:"active"|"archived";readonly createdAtUnixMs:number;readonly updatedAtUnixMs:number}
+export interface IdentityRegistryStatus{readonly identities:readonly IdentityRecord[];readonly secretInputSupported:false;readonly vaultBackend:"windows_credential_manager_reference";readonly credentialProvisioning:"unavailable"}
+export interface RegisterIdentityRequest{readonly provider:string;readonly accountLabel:string;readonly loginHint:string;readonly ownerProofMethod:OwnerProofMethod;readonly mfaEnabled:boolean;readonly mfaMethods:readonly MfaMethod[];readonly recoveryControlConfirmed:boolean}
+export interface UpdateMfaRequest{readonly id:string;readonly mfaEnabled:boolean;readonly mfaMethods:readonly MfaMethod[];readonly recoveryControlConfirmed:boolean}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -517,7 +526,13 @@ export interface CommandMap {
   readonly get_planning_snapshot:{readonly args:undefined;readonly result:PlanningSnapshot};
   readonly create_planned_goal:{readonly args:{readonly request:CreatePlannedGoalRequest};readonly result:PlannedGoal};
   readonly stop_planned_goal:{readonly args:{readonly id:string};readonly result:boolean};
+  readonly get_identity_registry:{readonly args:undefined;readonly result:IdentityRegistryStatus};
+  readonly register_identity:{readonly args:{readonly request:RegisterIdentityRequest};readonly result:IdentityRecord};
+  readonly update_identity_mfa:{readonly args:{readonly request:UpdateMfaRequest};readonly result:IdentityRecord};
+  readonly archive_identity:{readonly args:{readonly id:string};readonly result:boolean};
 }
+
+export function isIdentityRegistryStatus(value:unknown):value is IdentityRegistryStatus{if(!value||typeof value!=="object")return false;const s=value as Record<string,unknown>;return Array.isArray(s.identities)&&s.secretInputSupported===false&&s.vaultBackend==="windows_credential_manager_reference"&&s.credentialProvisioning==="unavailable"&&s.identities.every(v=>Boolean(v)&&typeof v==="object"&&(v as Record<string,unknown>).credentialPresent===false&&(v as Record<string,unknown>).vaultBinding==="reference_only");}
 
 export function isPlanningSnapshot(value:unknown):value is PlanningSnapshot{if(!value||typeof value!=="object")return false;const p=value as Record<string,unknown>;return Array.isArray(p.goals)&&Array.isArray(p.plans)&&Array.isArray(p.tasks)&&Array.isArray(p.reviews)&&p.capability==="internal_world_review_only";}
 
