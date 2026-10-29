@@ -1,0 +1,27 @@
+.knowledge{gap:16px}
+.knowledge .ingest-form,.knowledge .retrieve-form,.knowledge .doc-list{display:grid;gap:12px;padding:14px;border:1px solid #26384a}
+.knowledge h2{margin:0;font-size:16px;font-weight:500}
+.knowledge .ingest-row{display:flex;gap:12px;align-items:flex-end}
+.knowledge .ingest-row .model-field{flex:1}
+.knowledge input,.knowledge select{width:100%;box-sizing:border-box;border:1px solid #30465c;background:#09121d;color:#e5f2ff;padding:10px;font:inherit}
+.knowledge button{padding:9px 13px;border:1px solid #30465c;background:#111b27;color:#e5f2ff;font:inherit}
+.knowledge button:disabled{opacity:.45;cursor:not-allowed}
+.knowledge .empty-note{color:#7f94a8;margin:0}
+.knowledge .doc,.knowledge .citation{display:grid;gap:8px;padding:12px 14px;border:1px solid #223344;background:#0b1622}
+.knowledge .doc{grid-template-columns:1fr auto;align-items:center}
+.knowledge .doc small,.knowledge .cite-source{color:#8aa0b4;font-size:11px;word-break:break-all}
+.knowledge .doc-meta{display:flex;align-items:center;gap:10px}
+.knowledge .memory-search{display:flex;gap:8px}
+.knowledge .memory-search input{flex:1}
+.knowledge .switch-inline{display:flex;gap:8px;align-items:center;font-size:12px;color:#9fb3c8}
+.knowledge .switch-inline input{width:auto}
+.knowledge .citation header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.knowledge .citation header b{font-weight:500}
+.knowledge .citation .score{font-size:11px;color:#8fd0b4}
+.knowledge .citation p{margin:0;color:#dbe8f5;white-space:pre-wrap;word-break:break-word}
+.knowledge .sensitivity{padding:1px 7px;border:1px solid #30465c;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;font-size:11px}
+.knowledge .sensitivity-sensitive{color:#e0a3a3;border-color:#6e3b3b}
+.knowledge .sensitivity-private{color:#d8c48a;border-color:#6e5d32}
+.knowledge .sensitivity-public{color:#8fd0b4;border-color:#36624f}
+.knowledge .danger-button{border-color:#6e3b3b!important;color:#e0a3a3!important}
+@media (max-width:720px){.knowledge .ingest-row{flex-direction:column;align-items:stretch}.knowledge .doc{grid-template-columns:1fr}}
