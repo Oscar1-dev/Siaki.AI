@@ -82,6 +82,33 @@ pub struct IdentityState {
     conn: Mutex<Connection>,
 }
 impl IdentityState {
+    pub fn active_provider(&self, id: &str) -> Result<String, String> {
+        self.conn
+            .lock()
+            .map_err(|_| "identity state unavailable")?
+            .query_row(
+                "SELECT provider FROM identities WHERE id=?1 AND status='active'",
+                [id],
+                |r| r.get(0),
+            )
+            .map_err(|_| "active identity not found".into())
+    }
+    #[cfg(test)]
+    pub(crate) fn test_with_provider(provider: &str) -> (Self, String) {
+        let state = Self::from_connection(Connection::open_in_memory().unwrap()).unwrap();
+        let record = state
+            .register(RegisterIdentityRequest {
+                provider: provider.into(),
+                account_label: "test".into(),
+                login_hint: "owner".into(),
+                owner_proof_method: OwnerProofMethod::OwnerAttestation,
+                mfa_enabled: false,
+                mfa_methods: vec![],
+                recovery_control_confirmed: true,
+            })
+            .unwrap();
+        (state, record.id)
+    }
     pub fn load(config_dir: &Path) -> Result<Self, String> {
         std::fs::create_dir_all(config_dir).map_err(|_| "create identity directory failed")?;
         Self::from_connection(

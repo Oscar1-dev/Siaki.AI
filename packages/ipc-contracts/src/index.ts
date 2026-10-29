@@ -89,6 +89,10 @@ export const IPC_COMMANDS = {
   registerIdentity:"register_identity",
   updateIdentityMfa:"update_identity_mfa",
   archiveIdentity:"archive_identity",
+  getAccountWorkflows:"get_account_workflows",
+  createAccountWorkflow:"create_account_workflow",
+  confirmAccountWorkflowStep:"confirm_account_workflow_step",
+  cancelAccountWorkflow:"cancel_account_workflow",
 } as const;
 export const REMINDER_EVENT = "saiki://reminder" as const;
 export const WORLD_EVENT = "saiki://world-event" as const;
@@ -378,6 +382,11 @@ export interface IdentityRecord{readonly id:string;readonly provider:string;read
 export interface IdentityRegistryStatus{readonly identities:readonly IdentityRecord[];readonly secretInputSupported:false;readonly vaultBackend:"windows_credential_manager_reference";readonly credentialProvisioning:"unavailable"}
 export interface RegisterIdentityRequest{readonly provider:string;readonly accountLabel:string;readonly loginHint:string;readonly ownerProofMethod:OwnerProofMethod;readonly mfaEnabled:boolean;readonly mfaMethods:readonly MfaMethod[];readonly recoveryControlConfirmed:boolean}
 export interface UpdateMfaRequest{readonly id:string;readonly mfaEnabled:boolean;readonly mfaMethods:readonly MfaMethod[];readonly recoveryControlConfirmed:boolean}
+export type AccountWorkflowKind="onboarding"|"recovery";
+export interface AccountWorkflowStep{readonly id:string;readonly workflowId:string;readonly ordinal:number;readonly key:string;readonly title:string;readonly instruction:string;readonly status:"pending"|"confirmed";readonly requiresOwnerConfirmation:true;readonly automated:false;readonly confirmedAtUnixMs:number|null}
+export interface AccountWorkflow{readonly id:string;readonly identityId:string;readonly provider:string;readonly kind:AccountWorkflowKind;readonly status:"active"|"completed"|"cancelled";readonly createdAtUnixMs:number;readonly updatedAtUnixMs:number;readonly steps:readonly AccountWorkflowStep[]}
+export interface WorkflowAuditEvent{readonly id:string;readonly workflowId:string;readonly eventType:string;readonly stepKey:string|null;readonly actor:"owner";readonly occurredAtUnixMs:number}
+export interface WorkflowSnapshot{readonly workflows:readonly AccountWorkflow[];readonly audit:readonly WorkflowAuditEvent[];readonly automation:"manual_owner_confirmed_only";readonly secretInputSupported:false}
 
 export type ShellLifecycle = "starting" | "ready" | "exiting";
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -530,7 +539,13 @@ export interface CommandMap {
   readonly register_identity:{readonly args:{readonly request:RegisterIdentityRequest};readonly result:IdentityRecord};
   readonly update_identity_mfa:{readonly args:{readonly request:UpdateMfaRequest};readonly result:IdentityRecord};
   readonly archive_identity:{readonly args:{readonly id:string};readonly result:boolean};
+  readonly get_account_workflows:{readonly args:undefined;readonly result:WorkflowSnapshot};
+  readonly create_account_workflow:{readonly args:{readonly request:{readonly identityId:string;readonly kind:AccountWorkflowKind}};readonly result:AccountWorkflow};
+  readonly confirm_account_workflow_step:{readonly args:{readonly request:{readonly workflowId:string;readonly stepId:string;readonly ownerConfirmed:true}};readonly result:AccountWorkflow};
+  readonly cancel_account_workflow:{readonly args:{readonly id:string};readonly result:boolean};
 }
+
+export function isWorkflowSnapshot(value:unknown):value is WorkflowSnapshot{if(!value||typeof value!=="object")return false;const w=value as Record<string,unknown>;return Array.isArray(w.workflows)&&Array.isArray(w.audit)&&w.automation==="manual_owner_confirmed_only"&&w.secretInputSupported===false&&w.workflows.every(item=>Boolean(item)&&typeof item==="object"&&Array.isArray((item as Record<string,unknown>).steps)&&((item as Record<string,unknown>).steps as unknown[]).every(step=>Boolean(step)&&typeof step==="object"&&(step as Record<string,unknown>).automated===false&&(step as Record<string,unknown>).requiresOwnerConfirmation===true));}
 
 export function isIdentityRegistryStatus(value:unknown):value is IdentityRegistryStatus{if(!value||typeof value!=="object")return false;const s=value as Record<string,unknown>;return Array.isArray(s.identities)&&s.secretInputSupported===false&&s.vaultBackend==="windows_credential_manager_reference"&&s.credentialProvisioning==="unavailable"&&s.identities.every(v=>Boolean(v)&&typeof v==="object"&&(v as Record<string,unknown>).credentialPresent===false&&(v as Record<string,unknown>).vaultBinding==="reference_only");}
 

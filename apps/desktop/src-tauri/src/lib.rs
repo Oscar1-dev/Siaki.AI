@@ -7,6 +7,7 @@ mod knowledge;
 mod logging;
 mod memory;
 mod ollama;
+mod onboarding;
 mod overlay;
 mod persona;
 mod planning;
@@ -187,6 +188,7 @@ pub fn run() {
             app.manage(supervisor::SupervisorState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(planning::PlanningState::load(&config_dir).map_err(std::io::Error::other)?);
             app.manage(identity::IdentityState::load(&config_dir).map_err(std::io::Error::other)?);
+            app.manage(onboarding::OnboardingState::load(&config_dir).map_err(std::io::Error::other)?);
             let planning_handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 let planning_state = planning_handle.state::<planning::PlanningState>();
@@ -344,6 +346,10 @@ pub fn run() {
             identity::register_identity,
             identity::update_identity_mfa,
             identity::archive_identity
+            ,onboarding::get_account_workflows,
+            onboarding::create_account_workflow,
+            onboarding::confirm_account_workflow_step,
+            onboarding::cancel_account_workflow
         ])
         .build(tauri::generate_context!())
         .expect("failed to build SAIKI native shell");

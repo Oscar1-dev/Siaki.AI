@@ -35,6 +35,7 @@ import {
   isSupervisorSnapshot,
   isPlanningSnapshot,
   isIdentityRegistryStatus,
+  isWorkflowSnapshot,
   validateFrontendLog,
   type CommandMap,
   type FrontendLogEntry,
@@ -105,6 +106,9 @@ import {
   type IdentityRegistryStatus,
   type RegisterIdentityRequest,
   type UpdateMfaRequest,
+  type AccountWorkflow,
+  type AccountWorkflowKind,
+  type WorkflowSnapshot,
 } from "@saiki/ipc-contracts";
 
 async function invokeTyped<K extends keyof CommandMap>(
@@ -224,6 +228,10 @@ export async function getIdentityRegistry():Promise<IdentityRegistryStatus>{cons
 export async function registerIdentity(request:RegisterIdentityRequest):Promise<IdentityRecord>{return invokeTyped(IPC_COMMANDS.registerIdentity,{request});}
 export async function updateIdentityMfa(request:UpdateMfaRequest):Promise<IdentityRecord>{return invokeTyped(IPC_COMMANDS.updateIdentityMfa,{request});}
 export async function archiveIdentity(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.archiveIdentity,{id});}
+export async function getAccountWorkflows():Promise<WorkflowSnapshot>{const value:unknown=await invokeTyped(IPC_COMMANDS.getAccountWorkflows);if(!isWorkflowSnapshot(value))throw new Error("Native core returned invalid account workflows.");return value;}
+export async function createAccountWorkflow(identityId:string,kind:AccountWorkflowKind):Promise<AccountWorkflow>{return invokeTyped(IPC_COMMANDS.createAccountWorkflow,{request:{identityId,kind}});}
+export async function confirmAccountWorkflowStep(workflowId:string,stepId:string):Promise<AccountWorkflow>{return invokeTyped(IPC_COMMANDS.confirmAccountWorkflowStep,{request:{workflowId,stepId,ownerConfirmed:true}});}
+export async function cancelAccountWorkflow(id:string):Promise<boolean>{return invokeTyped(IPC_COMMANDS.cancelAccountWorkflow,{id});}
 
 export async function getOverlayStatus(): Promise<OverlayStatus> {
   const value: unknown = await invokeTyped(IPC_COMMANDS.getOverlayStatus);
