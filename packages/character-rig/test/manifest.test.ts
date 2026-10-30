@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { CharacterStateMachine, FrameBudgetTracker, PlaceholderPixiRig, validateRigManifest } from "../src/index";
+import { Texture } from "pixi.js";
+import { CharacterStateMachine, FrameBudgetTracker, PlaceholderPixiRig, inspectRigManifestV2, loadLayeredRigV2, validateReferencePreviewDescriptor, validateRigManifest, validateRigManifestV2, verifyAssetBytes } from "../src/index";
 
 const manifest = {
   schemaVersion: 1,
@@ -9,6 +10,14 @@ const manifest = {
   logicalSize: { width: 420, height: 720 },
   layers: [{ id: "body", role: "body", asset: "layers/body.png", zIndex: 0, anchor: [0.5, 1], required: true }],
   motions: [{ id: "idle", durationMs: 2400, loop: true }],
+} as const;
+
+const manifestV2 = {
+  schemaVersion: 2, rigId: "saiki.production", displayName: "SAIKI production layers", runtime: "pixi-layered-v2",
+  package: { version: "1.0.0", author: "Owner supplied", license: "Owner documented", source: "Commissioned layered artwork" }, logicalSize: { width: 1200, height: 2200 },
+  assets: [{ id: "torso", path: "layers/body/torso.png", mediaType: "image/png", sha256: `sha256:${"a".repeat(64)}`, width: 1, height: 1, scale: 2 }],
+  layers: [{ id: "torso", role: "body", semantic: "body.torso", assetId: "torso", parentId: null, zIndex: 0, pivot: [0.5, 0.5], position: [600, 1100], modes: ["full_body", "floating"], required: true }],
+  profiles: [{ mode: "full_body", scale: 1, anchor: [0.5, 1], offset: [0, 0] }, { mode: "floating", scale: 1.3, anchor: [0.5, 0.45], offset: [0, 40] }],
 } as const;
 
 describe("rig manifest", () => {
@@ -61,5 +70,46 @@ describe("rig manifest", () => {
     const tracker = new FrameBudgetTracker(16.67, 5);
     [[0.1, 16], [0.2, 17], [0.3, 15], [0.4, 20], [0.5, 16]].forEach(([update, frame]) => tracker.record(update!, frame!));
     expect(tracker.snapshot()).toEqual({ sampleCount: 5, updateMedianMs: 0.3, updateP95Ms: 0.5, frameP95Ms: 20, framesOverBudget: 2, budgetMs: 16.67 });
+  });
+});
+
+describe("production manifest v2", () => {
+  test("requires provenance, hashes, hierarchy, and both presentation profiles", () => expect(validateRigManifestV2(manifestV2).runtime).toBe("pixi-layered-v2"));
+  test("rejects unsafe paths and missing parent layers", () => {
+    expect(inspectRigManifestV2({ ...manifestV2, assets: [{ ...manifestV2.assets[0], path: "../torso.png" }] }).valid).toBe(false);
+    expect(inspectRigManifestV2({ ...manifestV2, layers: [{ ...manifestV2.layers[0], parentId: "missing" }] }).issues.some((issue) => issue.code === "layer.parent_missing")).toBe(true);
+  });
+  test("rejects parent cycles", () => {
+    const second = { ...manifestV2.layers[0], id: "head", semantic: "face.head", parentId: "torso" };
+    const first = { ...manifestV2.layers[0], parentId: "head" };
+    expect(inspectRigManifestV2({ ...manifestV2, layers: [first, second] }).issues.some((issue) => issue.code === "layer.parent_cycle")).toBe(true);
+  });
+  test("loads real texture sources and switches presentation mode", async () => {
+    const rig = await loadLayeredRigV2(manifestV2, "https://saiki.local/character/", async () => Texture.EMPTY);
+    expect(rig.layers.size).toBe(1); rig.setMode("floating"); expect(rig.root.scale.x).toBeCloseTo(1.3); expect(rig.layers.get("torso")?.node.visible).toBe(true); rig.destroy();
+  });
+  test("rejects decoded dimensions that do not match the manifest", async () => {
+    await expect(loadLayeredRigV2({ ...manifestV2, assets: [{ ...manifestV2.assets[0], width: 2 }] }, "https://saiki.local/", async () => Texture.EMPTY)).rejects.toThrow(/dimensions/i);
+  });
+  test("verifies the exact asset bytes against the manifest digest", async () => {
+    const bytes = new TextEncoder().encode("saiki-layer").buffer;
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const sha256 = `sha256:${[...digest].map((value) => value.toString(16).padStart(2, "0")).join("")}` as `sha256:${string}`;
+    await expect(verifyAssetBytes({ ...manifestV2.assets[0], sha256 }, bytes)).resolves.toBeUndefined();
+    await expect(verifyAssetBytes(manifestV2.assets[0], bytes)).rejects.toThrow(/SHA-256/i);
+  });
+});
+
+describe("non-production reference motion preview", () => {
+  const preview = {
+    schemaVersion: 1,
+    kind: "reference_motion_preview",
+    asset: { path: "reference-clean-v1.webp", mediaType: "image/webp", sha256: `sha256:${"b".repeat(64)}`, width: 900, height: 1650 },
+    provenance: { source: "art/character/saiki-kusuo/source/reference-clean-v1.png", releaseApproved: false, license: "unresolved" },
+  } as const;
+  test("accepts only explicitly non-production unresolved artwork", () => expect(validateReferencePreviewDescriptor(preview).kind).toBe("reference_motion_preview"));
+  test("rejects traversal and attempts to promote the preview", () => {
+    expect(() => validateReferencePreviewDescriptor({ ...preview, asset: { ...preview.asset, path: "../reference.webp" } })).toThrow(/asset/i);
+    expect(() => validateReferencePreviewDescriptor({ ...preview, provenance: { ...preview.provenance, releaseApproved: true } })).toThrow(/non-production/i);
   });
 });

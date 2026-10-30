@@ -90,6 +90,23 @@ test("experiment view labels finances unavailable and never fabricates revenue",
   expect(screen.getByText(/actual spend unknown\/unavailable/i)).toBeInTheDocument();
 });
 
+test("character foundation reports missing artwork without a placeholder", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as typeof fetch;
+  try {
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));
+    fireEvent.click(await screen.findByRole("button", { name: "character" }));
+    expect(await screen.findByText(/Layered artwork is not installed/i)).toBeInTheDocument();
+    expect(screen.getByText(/procedural capsule is not loaded/i)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Layer debug overlay/i })).toBeDisabled();
+    expect(screen.getByText(/source\/saiki-kusuo-master.psd/i)).toBeInTheDocument();
+    expect(screen.getByText("REFERENCE MOTION PREVIEW — NOT A RIG")).toBeInTheDocument();
+    expect(screen.getByText(/facial and joint animation remain unavailable/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/full-body Saiki character reference/i)).toHaveAttribute("src", "/character/saiki-kusuo/reference/reference-clean-v1.webp");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("system view confines file tools and launches only allowlisted apps", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Open workspace" }));

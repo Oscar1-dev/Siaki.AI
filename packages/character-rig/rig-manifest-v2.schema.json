@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://saiki.local/contracts/rig-manifest.v2.schema.json",
+  "title": "SAIKI production layered rig manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rigId", "displayName", "runtime", "package", "logicalSize", "assets", "layers", "profiles"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "rigId": { "$ref": "#/$defs/id" },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "runtime": { "const": "pixi-layered-v2" },
+    "package": {
+      "type": "object", "additionalProperties": false, "required": ["version", "author", "license", "source"],
+      "properties": {
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "author": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "license": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "source": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "logicalSize": { "$ref": "#/$defs/size" },
+    "assets": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/asset" } },
+    "layers": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/layer" } },
+    "profiles": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/$defs/profile" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+    "size": { "type": "object", "additionalProperties": false, "required": ["width", "height"], "properties": { "width": { "type": "integer", "minimum": 1, "maximum": 8192 }, "height": { "type": "integer", "minimum": 1, "maximum": 8192 } } },
+    "point": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }], "minItems": 2, "maxItems": 2 },
+    "unitPoint": { "type": "array", "prefixItems": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "number", "minimum": 0, "maximum": 1 }], "minItems": 2, "maxItems": 2 },
+    "asset": {
+      "type": "object", "additionalProperties": false, "required": ["id", "path", "mediaType", "sha256", "width", "height", "scale"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "path": { "type": "string", "pattern": "^[^/\\\\:][^\\\\:]*\\.(png|webp)$", "maxLength": 260 }, "mediaType": { "enum": ["image/png", "image/webp"] }, "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "width": { "type": "integer", "minimum": 1, "maximum": 8192 }, "height": { "type": "integer", "minimum": 1, "maximum": 8192 }, "scale": { "enum": [1, 2] } }
+    },
+    "layer": {
+      "type": "object", "additionalProperties": false, "required": ["id", "role", "semantic", "assetId", "parentId", "zIndex", "pivot", "position", "modes", "required"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "role": { "enum": ["body", "face", "hair", "clothing", "accessory", "effect"] }, "semantic": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{0,95}$" }, "assetId": { "$ref": "#/$defs/id" }, "parentId": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] }, "zIndex": { "type": "integer", "minimum": -10000, "maximum": 10000 }, "pivot": { "$ref": "#/$defs/unitPoint" }, "position": { "$ref": "#/$defs/point" }, "modes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["full_body", "floating"] } }, "required": { "type": "boolean" } }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false, "required": ["mode", "scale", "anchor", "offset"],
+      "properties": { "mode": { "enum": ["full_body", "floating"] }, "scale": { "type": "number", "exclusiveMinimum": 0, "maximum": 4 }, "anchor": { "$ref": "#/$defs/unitPoint" }, "offset": { "$ref": "#/$defs/point" } }
+    }
+  }
+}
