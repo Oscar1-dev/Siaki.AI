@@ -3,7 +3,7 @@
 ## Rights and source
 
 - Confirm in writing that the supplied artwork may be used and distributed with SAIKI.
-- Supply `source/saiki-kusuo-master.psd` with layers intact; Clip Studio source is acceptable in addition, not instead of the interchange PSD.
+- Store `source/saiki-kusuo-master.psd` under `art/character/saiki-kusuo/` with layers intact; Clip Studio source is acceptable in addition, not instead of the interchange PSD.
 - Supply `provenance.json` naming the artist, source, creation date, license/permission reference, and any redistribution restrictions. Do not place private credentials or contract text in the manifest.
 
 ## Canvas and export rules
@@ -18,7 +18,7 @@
 
 ## Required exports
 
-The runtime screen contains the authoritative 55-path checklist. It covers the full segmented body, clothing, head/hair, independently movable eyes and eyelids, eyebrows, seven mouth/viseme shapes, glasses, limiters, hand variants, and aura/teleport masks.
+The runtime screen contains the authoritative 55-path handoff checklist. Authoring sources remain under `art/character/saiki-kusuo/`; `npm run character:build` publishes only validated runtime layers, atlases, provenance, and `rig.v2.json` under `apps/desktop/public/character/saiki-kusuo/`.
 
 ## Registration reference
 

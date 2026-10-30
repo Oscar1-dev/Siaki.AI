@@ -1,0 +1,1050 @@
+{
+  "schemaVersion": 1,
+  "canvas": {
+    "width": 2400,
+    "height": 4400
+  },
+  "status": "registration_estimates_require_artist_review",
+  "layers": [
+    {
+      "id": "back.back-hair",
+      "file": "back/back-hair.png",
+      "mask": "back/back-hair.mask.png",
+      "semantic": "hair.back",
+      "role": "hair",
+      "parent": null,
+      "zIndex": -30,
+      "pivot": [
+        1200,
+        650
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.torso",
+      "file": "body/torso.png",
+      "mask": "body/torso.mask.png",
+      "semantic": "body.torso",
+      "role": "body",
+      "parent": null,
+      "zIndex": 0,
+      "pivot": [
+        1200,
+        1850
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.hips",
+      "file": "body/hips.png",
+      "mask": "body/hips.mask.png",
+      "semantic": "body.hips",
+      "role": "body",
+      "parent": "body.torso",
+      "zIndex": 2,
+      "pivot": [
+        1200,
+        2500
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.upper-leg-left",
+      "file": "body/upper-leg-left.png",
+      "mask": "body/upper-leg-left.mask.png",
+      "semantic": "body.leg.left.upper",
+      "role": "body",
+      "parent": "body.hips",
+      "zIndex": 1,
+      "pivot": [
+        1020,
+        2660
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.lower-leg-left",
+      "file": "body/lower-leg-left.png",
+      "mask": "body/lower-leg-left.mask.png",
+      "semantic": "body.leg.left.lower",
+      "role": "body",
+      "parent": "body.upper-leg-left",
+      "zIndex": 1,
+      "pivot": [
+        1000,
+        3350
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.foot-left",
+      "file": "body/foot-left.png",
+      "mask": "body/foot-left.mask.png",
+      "semantic": "body.foot.left",
+      "role": "body",
+      "parent": "body.lower-leg-left",
+      "zIndex": 1,
+      "pivot": [
+        990,
+        4050
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.upper-leg-right",
+      "file": "body/upper-leg-right.png",
+      "mask": "body/upper-leg-right.mask.png",
+      "semantic": "body.leg.right.upper",
+      "role": "body",
+      "parent": "body.hips",
+      "zIndex": 1,
+      "pivot": [
+        1380,
+        2660
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.lower-leg-right",
+      "file": "body/lower-leg-right.png",
+      "mask": "body/lower-leg-right.mask.png",
+      "semantic": "body.leg.right.lower",
+      "role": "body",
+      "parent": "body.upper-leg-right",
+      "zIndex": 1,
+      "pivot": [
+        1400,
+        3350
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.foot-right",
+      "file": "body/foot-right.png",
+      "mask": "body/foot-right.mask.png",
+      "semantic": "body.foot.right",
+      "role": "body",
+      "parent": "body.lower-leg-right",
+      "zIndex": 1,
+      "pivot": [
+        1410,
+        4050
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.upper-arm-left",
+      "file": "body/upper-arm-left.png",
+      "mask": "body/upper-arm-left.mask.png",
+      "semantic": "body.arm.left.upper",
+      "role": "body",
+      "parent": "body.torso",
+      "zIndex": 3,
+      "pivot": [
+        780,
+        1500
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.forearm-left",
+      "file": "body/forearm-left.png",
+      "mask": "body/forearm-left.mask.png",
+      "semantic": "body.arm.left.lower",
+      "role": "body",
+      "parent": "body.upper-arm-left",
+      "zIndex": 3,
+      "pivot": [
+        670,
+        2150
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.hand-left-relaxed",
+      "file": "body/hand-left-relaxed.png",
+      "mask": "body/hand-left-relaxed.mask.png",
+      "semantic": "body.hand.left.relaxed",
+      "role": "body",
+      "parent": "body.forearm-left",
+      "zIndex": 4,
+      "pivot": [
+        620,
+        2780
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.hand-left-psychic",
+      "file": "body/hand-left-psychic.png",
+      "mask": "body/hand-left-psychic.mask.png",
+      "semantic": "body.hand.left.psychic",
+      "role": "body",
+      "parent": "body.forearm-left",
+      "zIndex": 4,
+      "pivot": [
+        620,
+        2780
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.upper-arm-right",
+      "file": "body/upper-arm-right.png",
+      "mask": "body/upper-arm-right.mask.png",
+      "semantic": "body.arm.right.upper",
+      "role": "body",
+      "parent": "body.torso",
+      "zIndex": 3,
+      "pivot": [
+        1620,
+        1500
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.forearm-right",
+      "file": "body/forearm-right.png",
+      "mask": "body/forearm-right.mask.png",
+      "semantic": "body.arm.right.lower",
+      "role": "body",
+      "parent": "body.upper-arm-right",
+      "zIndex": 3,
+      "pivot": [
+        1730,
+        2150
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.hand-right-relaxed",
+      "file": "body/hand-right-relaxed.png",
+      "mask": "body/hand-right-relaxed.mask.png",
+      "semantic": "body.hand.right.relaxed",
+      "role": "body",
+      "parent": "body.forearm-right",
+      "zIndex": 4,
+      "pivot": [
+        1780,
+        2780
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "body.hand-right-psychic",
+      "file": "body/hand-right-psychic.png",
+      "mask": "body/hand-right-psychic.mask.png",
+      "semantic": "body.hand.right.psychic",
+      "role": "body",
+      "parent": "body.forearm-right",
+      "zIndex": 4,
+      "pivot": [
+        1780,
+        2780
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "clothing.jacket-body",
+      "file": "clothing/jacket-body.png",
+      "mask": "clothing/jacket-body.mask.png",
+      "semantic": "clothing.jacket.body",
+      "role": "clothing",
+      "parent": "body.torso",
+      "zIndex": 10,
+      "pivot": [
+        1200,
+        1850
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "clothing.jacket-sleeve-left",
+      "file": "clothing/jacket-sleeve-left.png",
+      "mask": "clothing/jacket-sleeve-left.mask.png",
+      "semantic": "clothing.jacket.sleeve.left",
+      "role": "clothing",
+      "parent": "body.upper-arm-left",
+      "zIndex": 10,
+      "pivot": [
+        780,
+        1500
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "clothing.jacket-sleeve-right",
+      "file": "clothing/jacket-sleeve-right.png",
+      "mask": "clothing/jacket-sleeve-right.mask.png",
+      "semantic": "clothing.jacket.sleeve.right",
+      "role": "clothing",
+      "parent": "body.upper-arm-right",
+      "zIndex": 10,
+      "pivot": [
+        1620,
+        1500
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "clothing.trousers",
+      "file": "clothing/trousers.png",
+      "mask": "clothing/trousers.mask.png",
+      "semantic": "clothing.trousers",
+      "role": "clothing",
+      "parent": "body.hips",
+      "zIndex": 10,
+      "pivot": [
+        1200,
+        2500
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "clothing.shoes",
+      "file": "clothing/shoes.png",
+      "mask": "clothing/shoes.mask.png",
+      "semantic": "clothing.shoes",
+      "role": "clothing",
+      "parent": "body.hips",
+      "zIndex": 10,
+      "pivot": [
+        1200,
+        4050
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.neck",
+      "file": "head/neck.png",
+      "mask": "head/neck.mask.png",
+      "semantic": "head.neck",
+      "role": "body",
+      "parent": "body.torso",
+      "zIndex": 15,
+      "pivot": [
+        1200,
+        1280
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.head-base",
+      "file": "head/head-base.png",
+      "mask": "head/head-base.mask.png",
+      "semantic": "head.base",
+      "role": "face",
+      "parent": "head.neck",
+      "zIndex": 16,
+      "pivot": [
+        1200,
+        1040
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.ear-left",
+      "file": "head/ear-left.png",
+      "mask": "head/ear-left.mask.png",
+      "semantic": "head.ear.left",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 17,
+      "pivot": [
+        940,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.ear-right",
+      "file": "head/ear-right.png",
+      "mask": "head/ear-right.mask.png",
+      "semantic": "head.ear.right",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 17,
+      "pivot": [
+        1460,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.front-hair",
+      "file": "head/front-hair.png",
+      "mask": "head/front-hair.mask.png",
+      "semantic": "hair.front",
+      "role": "hair",
+      "parent": "head.head-base",
+      "zIndex": 30,
+      "pivot": [
+        1200,
+        720
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.side-hair-left",
+      "file": "head/side-hair-left.png",
+      "mask": "head/side-hair-left.mask.png",
+      "semantic": "hair.side.left",
+      "role": "hair",
+      "parent": "head.head-base",
+      "zIndex": 29,
+      "pivot": [
+        930,
+        850
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "head.side-hair-right",
+      "file": "head/side-hair-right.png",
+      "mask": "head/side-hair-right.mask.png",
+      "semantic": "hair.side.right",
+      "role": "hair",
+      "parent": "head.head-base",
+      "zIndex": 29,
+      "pivot": [
+        1470,
+        850
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eye-white-left",
+      "file": "face/eye-white-left.png",
+      "mask": "face/eye-white-left.mask.png",
+      "semantic": "face.eye.left.white",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 20,
+      "pivot": [
+        1090,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eye-white-right",
+      "file": "face/eye-white-right.png",
+      "mask": "face/eye-white-right.mask.png",
+      "semantic": "face.eye.right.white",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 20,
+      "pivot": [
+        1310,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.iris-left",
+      "file": "face/iris-left.png",
+      "mask": "face/iris-left.mask.png",
+      "semantic": "face.eye.left.iris",
+      "role": "face",
+      "parent": "face.eye-white-left",
+      "zIndex": 21,
+      "pivot": [
+        1090,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.iris-right",
+      "file": "face/iris-right.png",
+      "mask": "face/iris-right.mask.png",
+      "semantic": "face.eye.right.iris",
+      "role": "face",
+      "parent": "face.eye-white-right",
+      "zIndex": 21,
+      "pivot": [
+        1310,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eyelid-left-open",
+      "file": "face/eyelid-left-open.png",
+      "mask": "face/eyelid-left-open.mask.png",
+      "semantic": "face.eyelid.left.open",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 22,
+      "pivot": [
+        1090,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eyelid-left-closed",
+      "file": "face/eyelid-left-closed.png",
+      "mask": "face/eyelid-left-closed.mask.png",
+      "semantic": "face.eyelid.left.closed",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 22,
+      "pivot": [
+        1090,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eyelid-right-open",
+      "file": "face/eyelid-right-open.png",
+      "mask": "face/eyelid-right-open.mask.png",
+      "semantic": "face.eyelid.right.open",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 22,
+      "pivot": [
+        1310,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eyelid-right-closed",
+      "file": "face/eyelid-right-closed.png",
+      "mask": "face/eyelid-right-closed.mask.png",
+      "semantic": "face.eyelid.right.closed",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 22,
+      "pivot": [
+        1310,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eyebrow-left",
+      "file": "face/eyebrow-left.png",
+      "mask": "face/eyebrow-left.mask.png",
+      "semantic": "face.eyebrow.left",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 23,
+      "pivot": [
+        1090,
+        920
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.eyebrow-right",
+      "file": "face/eyebrow-right.png",
+      "mask": "face/eyebrow-right.mask.png",
+      "semantic": "face.eyebrow.right",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 23,
+      "pivot": [
+        1310,
+        920
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-neutral",
+      "file": "face/mouth-neutral.png",
+      "mask": "face/mouth-neutral.mask.png",
+      "semantic": "face.mouth.neutral",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-a",
+      "file": "face/mouth-a.png",
+      "mask": "face/mouth-a.mask.png",
+      "semantic": "face.mouth.a",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-e",
+      "file": "face/mouth-e.png",
+      "mask": "face/mouth-e.mask.png",
+      "semantic": "face.mouth.e",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-i",
+      "file": "face/mouth-i.png",
+      "mask": "face/mouth-i.mask.png",
+      "semantic": "face.mouth.i",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-o",
+      "file": "face/mouth-o.png",
+      "mask": "face/mouth-o.mask.png",
+      "semantic": "face.mouth.o",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-u",
+      "file": "face/mouth-u.png",
+      "mask": "face/mouth-u.mask.png",
+      "semantic": "face.mouth.u",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "face.mouth-mbp",
+      "file": "face/mouth-mbp.png",
+      "mask": "face/mouth-mbp.mask.png",
+      "semantic": "face.mouth.mbp",
+      "role": "face",
+      "parent": "head.head-base",
+      "zIndex": 24,
+      "pivot": [
+        1200,
+        1160
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "accessories.glasses-frame",
+      "file": "accessories/glasses-frame.png",
+      "mask": "accessories/glasses-frame.mask.png",
+      "semantic": "accessory.glasses.frame",
+      "role": "accessory",
+      "parent": "head.head-base",
+      "zIndex": 40,
+      "pivot": [
+        1200,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "accessories.glasses-lenses",
+      "file": "accessories/glasses-lenses.png",
+      "mask": "accessories/glasses-lenses.mask.png",
+      "semantic": "accessory.glasses.lenses",
+      "role": "accessory",
+      "parent": "head.head-base",
+      "zIndex": 39,
+      "pivot": [
+        1200,
+        1010
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "accessories.limiter-left",
+      "file": "accessories/limiter-left.png",
+      "mask": "accessories/limiter-left.mask.png",
+      "semantic": "accessory.limiter.left",
+      "role": "accessory",
+      "parent": "head.head-base",
+      "zIndex": 42,
+      "pivot": [
+        930,
+        650
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "accessories.limiter-right",
+      "file": "accessories/limiter-right.png",
+      "mask": "accessories/limiter-right.mask.png",
+      "semantic": "accessory.limiter.right",
+      "role": "accessory",
+      "parent": "head.head-base",
+      "zIndex": 42,
+      "pivot": [
+        1470,
+        650
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": true,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "effects.aura-mask",
+      "file": "effects/aura-mask.png",
+      "mask": "effects/aura-mask.mask.png",
+      "semantic": "effect.aura.mask",
+      "role": "effect",
+      "parent": null,
+      "zIndex": -50,
+      "pivot": [
+        1200,
+        2200
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    },
+    {
+      "id": "effects.teleport-mask",
+      "file": "effects/teleport-mask.png",
+      "mask": "effects/teleport-mask.mask.png",
+      "semantic": "effect.teleport.mask",
+      "role": "effect",
+      "parent": null,
+      "zIndex": 50,
+      "pivot": [
+        1200,
+        2200
+      ],
+      "modes": [
+        "full_body",
+        "floating"
+      ],
+      "required": true,
+      "defaultVisible": false,
+      "registration": "estimated_requires_artist_review"
+    }
+  ]
+}

@@ -13,13 +13,22 @@
     "test:phase00": "node --test tests/phase00.test.mjs",
     "check": "npm run check:contracts && npm run check --workspace @saiki/ipc-contracts && npm run check --workspace @saiki/character-rig && npm run check --workspace @saiki/desktop",
     "check:rust": "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings",
-    "test": "npm run test:phase00 && npm run test --workspace @saiki/ipc-contracts && npm run test --workspace @saiki/character-rig && npm run test --workspace @saiki/desktop && cargo test --workspace --locked",
+    "test": "npm run test:phase00 && npm run test:assets && npm run test --workspace @saiki/ipc-contracts && npm run test --workspace @saiki/character-rig && npm run test --workspace @saiki/desktop && cargo test --workspace --locked",
     "build:web": "npm run build --workspace @saiki/desktop",
     "build:windows": "npm run tauri:build --workspace @saiki/desktop",
     "smoke:windows": "node scripts/smoke-windows.mjs",
+    "character:inspect": "node scripts/character-assets.mjs inspect",
+    "character:prepare-reference": "node scripts/character-assets.mjs prepare-reference",
+    "character:scaffold": "node scripts/character-assets.mjs scaffold",
+    "character:preview": "node scripts/character-assets.mjs preview",
+    "character:extract": "node scripts/character-assets.mjs extract",
+    "character:validate": "node scripts/character-assets.mjs validate",
+    "character:build": "node scripts/character-assets.mjs build",
+    "test:assets": "node --test tests/character-assets.test.mjs",
     "verify": "npm run check && npm run check:rust && npm test && npm run build:web"
   },
   "devDependencies": {
+    "sharp": "^0.35.5",
     "typescript": "5.9.3"
   },
   "engines": {

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "status": "reference_candidate_not_a_rig",
+  "createdAt": "2026-10-30",
+  "subject": "Saiki Kusuo full-body front reference",
+  "generator": "OpenAI built-in image generation",
+  "sourceFiles": [
+    {
+      "path": "source/reference-ai-v1.png",
+      "sha256": "sha256:7098a086f41e55deb712cc49840e89eef35e6bcc243f73a6a5648f077f295e27",
+      "width": 1024,
+      "height": 1536,
+      "purpose": "AI-generated reference candidate"
+    },
+    {
+      "path": "source/reference-clean-v1.png",
+      "sha256": "sha256:11d1e51e0086383e48374961105b60399bfeb6f1b99d32712faa175353b65c3a",
+      "width": 2400,
+      "height": 4400,
+      "purpose": "registered alpha-cleaned reference for mask authoring"
+    }
+  ],
+  "prompt": "Full-body front-facing Saiki Kusuo production 2D desktop-companion reference, neutral relaxed pose, recognizable pink hair, green-tinted glasses, psychic limiter devices, green school uniform, clean anime linework and cel shading, transparent background, clear joints for later rigging, no text or watermark.",
+  "transformations": [
+    "Resized proportionally into a 2400x4400 transparent canvas",
+    "Removed alpha values at or below 32 and remapped retained alpha",
+    "Generated a 900x1650 WebP reference-only application preview"
+  ],
+  "rights": {
+    "characterIp": "Third-party copyrighted character; distribution and commercial-use rights require owner legal review.",
+    "generatedOutput": "Generation provenance recorded; no claim of exclusive ownership or licensed character rights is made.",
+    "releaseApproved": false
+  }
+}

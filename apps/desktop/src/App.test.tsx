@@ -101,6 +101,8 @@ test("character foundation reports missing artwork without a placeholder", async
     expect(screen.getByText(/procedural capsule is not loaded/i)).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /Layer debug overlay/i })).toBeDisabled();
     expect(screen.getByText(/source\/saiki-kusuo-master.psd/i)).toBeInTheDocument();
+    expect(screen.getByText(/REFERENCE CANDIDATE/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/full-body Saiki character reference/i)).toHaveAttribute("src", "/character/saiki-kusuo/reference/reference-clean-v1.webp");
   } finally { globalThis.fetch = originalFetch; }
 });
 

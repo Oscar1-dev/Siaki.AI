@@ -7,6 +7,8 @@
 - PixiJS layer loader with SHA-256 byte verification, decoded-dimension checks, parent-child construction, and full-body/floating profiles.
 - Debug overlay for sprite bounds, pivots, and layer identifiers.
 - Native workspace asset-foundation view with the exact artwork handoff list.
+- AI-generated full-body reference candidate with recorded prompt, hashes, alpha cleanup, and an explicitly non-rig preview.
+- Deterministic source inspection, mask extraction, validation, pivot registration, manifest generation, and atlas-building commands.
 - Production overlay now fails honestly when artwork is absent; it does not load the procedural capsule.
 
 ## Completion gate
@@ -15,7 +17,7 @@ Contract and loader tests must reject traversal, missing parents, hierarchy cycl
 
 ## Blocker
 
-The actual character is not present. Phase 22.5B requires the licensed layered artwork described in [artwork-checklist.md](artwork-checklist.md). Phase 22.5A does not claim character animation or final visual quality.
+The actual layered character is not present. A real reference candidate now exists, but Phase 22.5B requires artist-reviewed masks, reconstructed occluded pixels, alternate facial/hand artwork, corrected pivots, and rights review. See [asset-creation-workflow.md](asset-creation-workflow.md) and [artwork-checklist.md](artwork-checklist.md). Phase 22.5A does not claim character animation or final visual quality.
 
 ## Verification
 
