@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "reference_motion_preview",
+  "asset": {
+    "path": "reference-clean-v1.webp",
+    "mediaType": "image/webp",
+    "sha256": "sha256:d5aea5c1f7448642f7624ab57fd0da97c6553f906b3cf0b8918c243f58557adf",
+    "width": 900,
+    "height": 1650
+  },
+  "provenance": {
+    "source": "art/character/saiki-kusuo/source/reference-clean-v1.png",
+    "releaseApproved": false,
+    "license": "unresolved"
+  }
+}

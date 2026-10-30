@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Texture } from "pixi.js";
-import { CharacterStateMachine, FrameBudgetTracker, PlaceholderPixiRig, inspectRigManifestV2, loadLayeredRigV2, validateRigManifest, validateRigManifestV2, verifyAssetBytes } from "../src/index";
+import { CharacterStateMachine, FrameBudgetTracker, PlaceholderPixiRig, inspectRigManifestV2, loadLayeredRigV2, validateReferencePreviewDescriptor, validateRigManifest, validateRigManifestV2, verifyAssetBytes } from "../src/index";
 
 const manifest = {
   schemaVersion: 1,
@@ -97,5 +97,19 @@ describe("production manifest v2", () => {
     const sha256 = `sha256:${[...digest].map((value) => value.toString(16).padStart(2, "0")).join("")}` as `sha256:${string}`;
     await expect(verifyAssetBytes({ ...manifestV2.assets[0], sha256 }, bytes)).resolves.toBeUndefined();
     await expect(verifyAssetBytes(manifestV2.assets[0], bytes)).rejects.toThrow(/SHA-256/i);
+  });
+});
+
+describe("non-production reference motion preview", () => {
+  const preview = {
+    schemaVersion: 1,
+    kind: "reference_motion_preview",
+    asset: { path: "reference-clean-v1.webp", mediaType: "image/webp", sha256: `sha256:${"b".repeat(64)}`, width: 900, height: 1650 },
+    provenance: { source: "art/character/saiki-kusuo/source/reference-clean-v1.png", releaseApproved: false, license: "unresolved" },
+  } as const;
+  test("accepts only explicitly non-production unresolved artwork", () => expect(validateReferencePreviewDescriptor(preview).kind).toBe("reference_motion_preview"));
+  test("rejects traversal and attempts to promote the preview", () => {
+    expect(() => validateReferencePreviewDescriptor({ ...preview, asset: { ...preview.asset, path: "../reference.webp" } })).toThrow(/asset/i);
+    expect(() => validateReferencePreviewDescriptor({ ...preview, provenance: { ...preview.provenance, releaseApproved: true } })).toThrow(/non-production/i);
   });
 });
