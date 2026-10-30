@@ -1,4 +1,4 @@
-import { Assets, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
+import { Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import type { PresentationMode, RigAssetV2, RigLayerV2 } from "./manifest-v2";
 import { validateRigManifestV2 } from "./manifest-v2";
 
@@ -69,13 +69,12 @@ export class RigDebugOverlay {
 }
 
 async function loadPixiTexture(asset: RigAssetV2, baseUrl: string): Promise<Texture> {
-  const response = await fetch(new URL(asset.path, baseUrl), { cache: "no-store" });
+  const assetUrl = new URL(asset.path, baseUrl).toString();
+  const response = await fetch(assetUrl, { cache: "no-store" });
   if (!response.ok) throw new Error(`Required asset ${asset.path} is unavailable (${response.status}).`);
   const bytes = await response.arrayBuffer(); if (bytes.byteLength > 16 * 1024 * 1024) throw new Error(`Asset ${asset.path} exceeds the 16 MiB limit.`);
   await verifyAssetBytes(asset, bytes);
-  const objectUrl = URL.createObjectURL(new Blob([bytes], { type: asset.mediaType }));
-  try { const texture = await Assets.load<Texture>(objectUrl); if (!(texture instanceof Texture)) throw new Error(`Asset ${asset.path} did not decode as a Pixi texture.`); return texture; }
-  finally { URL.revokeObjectURL(objectUrl); }
+  const image = new Image(); image.src = assetUrl; await image.decode(); const texture = Texture.from(image); if (!(texture instanceof Texture)) throw new Error(`Asset ${asset.path} did not decode as a Pixi texture.`); return texture;
 }
 
 export async function verifyAssetBytes(asset: RigAssetV2, bytes: ArrayBuffer): Promise<void> {

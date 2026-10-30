@@ -1,4 +1,5 @@
 export const CHARACTER_MANIFEST_URL = "/character/saiki-kusuo/rig.v2.json";
+export const CHARACTER_REFERENCE_PREVIEW_URL = "/character/saiki-kusuo/reference/reference-preview.v1.json";
 export const CHARACTER_DEBUG_STORAGE_KEY = "saiki.character.debug.v1";
 export const REQUIRED_CHARACTER_FILES = [
   "source/saiki-kusuo-master.psd", "layers/back/back-hair.png", "layers/body/torso.png", "layers/body/hips.png",
